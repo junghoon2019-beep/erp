@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>에너지바 그로스 출고</title>
+<link rel="manifest" href="gross.webmanifest">
+<meta name="theme-color" content="#0f1419">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="그로스 GR">
 <style>
   :root{
     --bg:#0f1419; --panel:#1a2129; --panel2:#222c37; --line:#2f3b48;
@@ -281,12 +287,27 @@ function renderProd(){
 }
 function show(id){['screen-prod','screen-qty','screen-rec'].forEach(s=>
   document.getElementById(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
-function goProd(){state.mode=null;document.getElementById('hsub').textContent='출고할 상품을 선택하세요';show('screen-prod');}
+
+// ===== 시스템 뒤로가기(안드로이드 ← 버튼) 처리 =====
+// 단계(prod→qty→rec)로 들어갈 때 히스토리를 쌓고, 뒤로가기(popstate)가 오면
+// event.state의 단계로 화면을 되돌린다. back-link·"처음으로"·자동복귀도 history로 통일.
+const STEP_DEPTH={prod:0, qty:1, rec:2};
+let curStep='prod';
+function pushStep(step){ curStep=step; history.pushState({step:step}, ''); }
+function showStep(step){   // 실제 화면 전환 (히스토리는 건드리지 않음)
+  curStep=step;
+  if(step==='prod'){ state.mode=null; document.getElementById('hsub').textContent='출고할 상품을 선택하세요'; show('screen-prod'); }
+  else if(step==='qty'){ renderQty(); show('screen-qty'); }
+  else if(step==='rec'){ state.mode==='single'?renderRecSingle():renderRecMix(); show('screen-rec'); }
+}
+window.addEventListener('popstate', (e)=>{ showStep((e.state&&e.state.step)||'prod'); });
+// 처음으로/자동복귀: 현재 단계 깊이만큼 히스토리를 되감아 prod로 (popstate가 화면 전환)
+function goProd(){ const d=STEP_DEPTH[curStep]||0; if(d>0) history.go(-d); else showStep('prod'); }
 
 function pickSingle(code,name){state.mode='single';state.code=code;state.name=name;state.qty=600;state.edits={};state.loss={};
-  document.getElementById('hsub').textContent=name+' 단품 출고';renderQty();show('screen-qty');}
+  document.getElementById('hsub').textContent=name+' 단품 출고';renderQty();pushStep('qty');show('screen-qty');}
 function pickMix(){state.mode='mix';state.code='MIX';state.name='MIX 40개입';state.sets=12;state.mixEdits={};state.loss={};
-  document.getElementById('hsub').textContent='MIX 40개입 출고';renderQty();show('screen-qty');}
+  document.getElementById('hsub').textContent='MIX 40개입 출고';renderQty();pushStep('qty');show('screen-qty');}
 
 // ---- 화면2: 수량 ----
 function renderQty(){
@@ -365,8 +386,8 @@ function updateMix(){
 }
 
 // ---- 화면3: 추천 ----
-function goQty(){renderQty();show('screen-qty');}
-function goRec(){ state.mode==='single'?renderRecSingle():renderRecMix(); show('screen-rec'); }
+function goQty(){ history.back(); }   // rec→qty 한 단계 뒤로 (popstate가 화면 전환)
+function goRec(){ state.mode==='single'?renderRecSingle():renderRecMix(); pushStep('rec'); show('screen-rec'); }
 
 function lotCardHTML(p, cls){
   const far=p.left>=85?'far':'';
@@ -693,6 +714,8 @@ function sendOut(lines, btn){
 
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
 
+history.replaceState({step:'prod'}, '');   // 초기 단계 명시 (뒤로가기 정합)
+curStep='prod';
 renderProd();
 loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜 받아오기(실패해도 기본값으로 동작)
 </script>

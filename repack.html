@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>에너지바 소분 검수</title>
+<link rel="manifest" href="repack.webmanifest">
+<meta name="theme-color" content="#11151c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="소분 IN">
 <style>
   :root{
     --bg:#11151c; --panel:#171c25; --card:#1c2330; --card2:#232c3b;
@@ -408,16 +414,16 @@ function renderCheck(){
 }
 
 /* ---------- 동작 ---------- */
-function pickProduct(code){ curProduct=code; view='lots'; render(); }
-function goProducts(){ curProduct=null; view='products'; render(); }
-function goLots(){ curLot=null; counted=''; memo=''; view='lots'; render(); }
+function pickProduct(code){ curProduct=code; view='lots'; pushStep(); render(); }
+function goProducts(){ history.back(); }
+function goLots(){ history.back(); }
 
 function pickLot(lot){
   const l=LOTS.find(x=>x.lot===lot);
   if(!l) return;
   curLot=l; counted=''; memo='';
   curWorker = lastWorker;        // 직전 작업자 미리 선택
-  view='check'; render();
+  view='check'; pushStep(); render();
 }
 
 function tapKey(k){
@@ -487,6 +493,17 @@ function toast(msg,kind){
   if(toastTimer) clearTimeout(toastTimer);
   if(kind!=='') toastTimer=setTimeout(()=>{ t.className='toast'; }, 2200);
 }
+
+/* ---------- 시스템 뒤로가기(안드로이드 ← 버튼) 처리 ----------
+   단계 진입 시 히스토리를 한 칸 쌓고, 뒤로가기(popstate)가 오면 한 단계만 내려간다.
+   화면 안 "← 상품/← LOT" 버튼·검수 후 자동 복귀(goLots)도 history.back()으로 통일. */
+function pushStep(){ history.pushState({view:view}, ''); }
+function stepBack(){
+  if(view==='check'){ curLot=null; counted=''; memo=''; view='lots'; }
+  else if(view==='lots'){ curProduct=null; view='products'; }
+  render();
+}
+window.addEventListener('popstate', ()=>{ stepBack(); });
 
 /* ---------- 시작 ---------- */
 loadFromSheet();

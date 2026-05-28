@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>에너지바 출고 입력</title>
+<link rel="manifest" href="out.webmanifest">
+<meta name="theme-color" content="#0f1b14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="출고 OUT">
 <style>
   /* ===== 현장용 디자인 원칙 =====
      - 장갑 낀 손/추운 창고 고려: 버튼·글씨 크게, 터치 영역 넉넉히
@@ -394,7 +400,7 @@ function renderLots(){
   // 이 상품 출고를 마쳤으면 상품 선택으로 나가는 버튼
   footer.innerHTML=`<button class="btn ghost" onclick="goProducts()">${p.name} 출고 끝 · 상품 선택으로</button>`;
 }
-function goProducts(){ view='products'; curProduct=null; justOut={}; render(); }
+function goProducts(){ history.back(); }
 
 function renderQty(){
   const l=LOTS.find(x=>x.lot===curLot);
@@ -444,8 +450,8 @@ function renderQty(){
   footer.innerHTML=`<button class="btn" ${(n<=0||over||!workerOk())?'disabled':''} onclick="confirmOut()">출고 기록하기</button>`;
 }
 
-function pickProduct(code){ curProduct=code; view='lots'; render(); }
-function pickLot(lot){ curLot=lot; qty=''; loss=0; view='qty'; render(); }
+function pickProduct(code){ curProduct=code; view='lots'; pushStep(); render(); }
+function pickLot(lot){ curLot=lot; qty=''; loss=0; view='qty'; pushStep(); render(); }
 function onLossInput(el){
   let v=parseInt(el.value.replace(/[^0-9]/g,''))||0;
   loss=v;
@@ -492,17 +498,23 @@ function confirmOut(){
   .catch(err=>showToast(`⚠ 전송 오류<br>인터넷 확인 후 다시`));
 
   // 같은 상품의 LOT 목록으로 복귀 (여러 LOT 연달아 출고)
-  curLot=null; qty=''; loss=0; view='lots'; render();
+  curLot=null; qty=''; loss=0; history.back();
 }
 function showToast(msg){
   const t=$('toast'); t.innerHTML=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2400);
 }
-$('back').onclick=()=>{
+// ===== 시스템 뒤로가기(안드로이드 ← 버튼) 처리 =====
+// 단계가 깊어질 때 히스토리를 한 칸 쌓고, 뒤로가기(popstate)가 오면 한 단계만 내려간다.
+// 화면 안 ‹ 버튼·기록 후 복귀도 history.back()으로 통일 → "히스토리 1칸 = 화면 1단계" 유지.
+function pushStep(){ history.pushState({view:view}, ''); }
+function stepBack(){
   if(view==='qty'){ view='lots'; }
   else if(view==='lots'){ view='products'; curProduct=null; justOut={}; }
   render();
-};
+}
+window.addEventListener('popstate', ()=>{ stepBack(); });
+$('back').onclick=()=>{ history.back(); };  // 시스템 뒤로가기와 같은 경로로 처리
 render();
 loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜 받아오기(실패해도 기본값으로 동작)
 </script>
