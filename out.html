@@ -177,13 +177,13 @@
   .loss-box.on{ border-color:var(--warn); }
   .loss-label{ font-size:14px; font-weight:700; color:var(--dim); margin-bottom:4px; }
   .loss-sub{ font-size:12.5px; color:var(--dim); margin-bottom:10px; font-weight:600; }
-  .loss-row{ display:flex; align-items:center; gap:12px; }
-  .loss-input{ flex:1; height:56px; border-radius:14px; background:var(--card);
+  .loss-row{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .loss-input{ flex:1; min-width:0; width:100%; height:56px; border-radius:14px; background:var(--card);
     border:2px solid var(--line); color:var(--txt); font-size:24px; font-weight:800;
     text-align:center; }
   .loss-input:focus{ outline:none; border-color:var(--warn); }
   .loss-input.has{ border-color:var(--warn); color:var(--warn); }
-  .loss-unit{ font-size:16px; font-weight:700; color:var(--dim); }
+  .loss-unit{ flex:none; white-space:nowrap; font-size:16px; font-weight:700; color:var(--dim); }
 </style>
 </head>
 <body>
