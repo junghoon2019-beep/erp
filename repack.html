@@ -350,7 +350,15 @@ function renderCheck(){
   h+=`<div class="field-label">실제 센 수량</div>
       <div class="${nbCls}">${counted===''?'0':counted}</div>`;
 
-  // 차이 안내
+  // 숫자판
+  h+='<div class="keypad">';
+  ['1','2','3','4','5','6','7','8','9'].forEach(k=>h+=`<div class="key" onclick="tapKey('${k}')">${k}</div>`);
+  h+=`<div class="key fn" onclick="tapKey('C')">지움</div>`;
+  h+=`<div class="key" onclick="tapKey('0')">0</div>`;
+  h+=`<div class="key fn" onclick="tapKey('B')">←</div>`;
+  h+='</div>';
+
+  // 차이 안내 (키패드 아래 — 키 위치가 입력값에 따라 밀리지 않도록)
   if(isMatch){
     h+=`<div class="diff match"><div class="dt">✓ 수량 일치 — 이상 없음</div>
           <div class="dd">아래 "검수 통과"를 누르면 끝납니다. (기록 안 남김)</div></div>`;
@@ -361,14 +369,6 @@ function renderCheck(){
     h+=`<div class="diff over"><div class="dt">넘어온 수량보다 ${diff}개 많음</div>
           <div class="dd">지금은 초과는 기록하지 않습니다. 수량을 다시 확인하거나, 맞으면 통과하세요.</div></div>`;
   }
-
-  // 숫자판
-  h+='<div class="keypad">';
-  ['1','2','3','4','5','6','7','8','9'].forEach(k=>h+=`<div class="key" onclick="tapKey('${k}')">${k}</div>`);
-  h+=`<div class="key fn" onclick="tapKey('C')">지움</div>`;
-  h+=`<div class="key" onclick="tapKey('0')">0</div>`;
-  h+=`<div class="key fn" onclick="tapKey('B')">←</div>`;
-  h+='</div>';
 
   // 사유 입력(부족일 때만 노출)
   if(isShort){
