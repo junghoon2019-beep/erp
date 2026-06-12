@@ -165,6 +165,8 @@
   .hist-date{font-size:13px;color:var(--accent);font-weight:800;margin:14px 4px 7px;
     display:flex;justify-content:space-between;align-items:baseline;}
   .hist-sum{color:var(--dim);font-weight:700;}
+  .hist-break{font-size:12.5px;color:var(--dim);margin:0 4px 9px;display:flex;flex-wrap:wrap;gap:6px 12px;}
+  .hist-break .bd{white-space:nowrap;} .hist-break .bd-c{color:var(--text);font-weight:800;}
   .hist-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel);
     border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:14px;gap:10px;}
   .hist-l{font-weight:600;min-width:0;} .hist-r{color:var(--accent);font-weight:800;flex:none;}
@@ -313,17 +315,25 @@ function renderGrossHist(){
   if(rows.length===0){ el.innerHTML=h+'<div class="hist-empty">최근 5일 그로스 출고 없음</div></div>'; return; }
   const groups=[], idx={};
   rows.forEach(r=>{
-    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[], sum:0}); }
+    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[], sum:0, byCode:{}}); }
     const g=groups[idx[r.date]]; g.items.push(r); g.sum+=r.qty;
+    g.byCode[r.code]=(g.byCode[r.code]||0)+r.qty;
   });
   groups.forEach(g=>{
     h+=`<div class="hist-date">${fmtMDG(g.date)}<span class="hist-sum">총 ${g.sum}개</span></div>`;
+    h+=`<div class="hist-break">${breakdownLineG(g.byCode)}</div>`;
     g.items.forEach(o=>{
       h+=`<div class="hist-row"><span class="hist-l">${nameOfG(o.code)} · ${o.lot}${o.memo?' · '+o.memo:''}</span><span class="hist-r">${o.qty}개</span></div>`;
     });
   });
   h+='</div>';
   el.innerHTML=h;
+}
+// [v2] 그날 종류별 소계 한 줄 (제품 순서, 0개는 생략). 약칭 = 코드 끝 2글자(CR/CA/ST/BK/NU)
+function breakdownLineG(byCode){
+  return PRODUCTS.filter(p=>byCode[p.code]>0)
+    .map(p=>`<span class="bd"><span class="bd-c">${p.code.slice(-2)}</span> ${byCode[p.code]}개</span>`)
+    .join('');
 }
 function show(id){['screen-prod','screen-qty','screen-rec'].forEach(s=>
   document.getElementById(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
