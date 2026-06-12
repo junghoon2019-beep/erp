@@ -157,6 +157,19 @@
   .back-link{font-size:14px;color:var(--accent);cursor:pointer;padding:6px 0;display:inline-block;}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#143524;color:#bff0d2;
     padding:14px 22px;border-radius:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:100;border:1px solid #2f5a3d;}
+
+  /* [v2] 최근 출고 내역 */
+  .hist{margin-top:20px;}
+  .hist-h{font-size:14px;color:var(--dim);font-weight:700;margin:0 4px 10px;}
+  .hist-empty{color:var(--dim);font-size:13px;text-align:center;padding:16px;}
+  .hist-date{font-size:13px;color:var(--accent);font-weight:800;margin:14px 4px 7px;
+    display:flex;justify-content:space-between;align-items:baseline;}
+  .hist-sum{color:var(--dim);font-weight:700;}
+  .hist-break{font-size:12.5px;color:var(--dim);margin:0 4px 9px;display:flex;flex-wrap:wrap;gap:6px 12px;}
+  .hist-break .bd{white-space:nowrap;} .hist-break .bd-c{color:var(--text);font-weight:800;}
+  .hist-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:14px;gap:10px;}
+  .hist-l{font-weight:600;min-width:0;} .hist-r{color:var(--accent);font-weight:800;flex:none;}
 </style>
 </head>
 <body>
@@ -172,6 +185,7 @@
       <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
     </div>
     <div class="prod-grid" id="prodGrid"></div>
+    <div id="grossHist"></div>
   </section>
 
   <section id="screen-qty" class="hidden">
@@ -284,6 +298,42 @@ function renderProd(){
       <div class="pname">${p.name}</div><div class="pcode">${p.code}</div></div>`).join('')
     + `<div class="prod-btn mix" onclick="pickMix()">
         <div class="pname">MIX 40개입</div><div class="pcode">5종 × 8개 · 1박스=12세트</div></div>`;
+  renderGrossHist();   // [v2] 하단 최근 출고 내역
+}
+
+// [v2] 최근 5일 '로켓그로스' 출고 내역 (날짜별 묶음·일자 합계·최신순)
+function nameOfG(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
+function fmtMDG(ymd){
+  const m=(ymd||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ymd||'';
+  const md=parseInt(m[2],10)+'/'+parseInt(m[3],10);
+  return (ymd===TODAY)? md+' (오늘)' : md;
+}
+function renderGrossHist(){
+  const el=document.getElementById('grossHist'); if(!el) return;
+  const rows=RECENTS.filter(r=>r.type==='로켓그로스' && r.qty>0);
+  let h='<div class="hist"><div class="hist-h">최근 그로스 출고 내역 (5일)</div>';
+  if(rows.length===0){ el.innerHTML=h+'<div class="hist-empty">최근 5일 그로스 출고 없음</div></div>'; return; }
+  const groups=[], idx={};
+  rows.forEach(r=>{
+    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[], sum:0, byCode:{}}); }
+    const g=groups[idx[r.date]]; g.items.push(r); g.sum+=r.qty;
+    g.byCode[r.code]=(g.byCode[r.code]||0)+r.qty;
+  });
+  groups.forEach(g=>{
+    h+=`<div class="hist-date">${fmtMDG(g.date)}<span class="hist-sum">총 ${g.sum}개</span></div>`;
+    h+=`<div class="hist-break">${breakdownLineG(g.byCode)}</div>`;
+    g.items.forEach(o=>{
+      h+=`<div class="hist-row"><span class="hist-l">${nameOfG(o.code)} · ${o.lot}${o.memo?' · '+o.memo:''}</span><span class="hist-r">${o.qty}개</span></div>`;
+    });
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+// [v2] 그날 종류별 소계 한 줄 (제품 순서, 0개는 생략). 약칭 = 코드 끝 2글자(CR/CA/ST/BK/NU)
+function breakdownLineG(byCode){
+  return PRODUCTS.filter(p=>byCode[p.code]>0)
+    .map(p=>`<span class="bd"><span class="bd-c">${p.code.slice(-2)}</span> ${byCode[p.code]}개</span>`)
+    .join('');
 }
 function show(id){['screen-prod','screen-qty','screen-rec'].forEach(s=>
   document.getElementById(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
@@ -550,6 +600,7 @@ function renderExpNotice(used,elId){
 // ===== 실제 시트 전송 =====
 // 배포 후 받은 웹앱 URL을 여기에 붙여넣으세요. (일반 출고와 같은 URL 사용 가능)
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby9_qw5DrF5AFT8fSByM47QOmM8YilLkaNBk0RNxV0vEr-0vjRqMAzOVvv94MRExjHN/exec';
+let RECENTS = [];   // [v2] 시트에서 받아온 최근 5일 출고기록 (상품선택 화면 하단 그로스 이력)
 
 // ===== 작업자(출고관리자) =====
 // 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
@@ -575,6 +626,11 @@ function loadFromSheet(opts){
       }
       // (2) 오늘 날짜 — 전날 생산분 판정 기준을 시트와 통일
       if(res && res.today) TODAY = res.today;
+      // [v2] 최근 5일 출고기록 (상품선택 화면 하단 그로스 이력)
+      if(res && Array.isArray(res.records)){
+        RECENTS = res.records;
+        if(state.mode===null) renderGrossHist();
+      }
       // (3) LOT 재고 — 그로스는 SAMPLE 형식(lot,code,name,stock,exp,left)과 동일 → 그대로 교체
       if(res && Array.isArray(res.lots) && res.lots.length){
         SAMPLE = res.lots.map(l=>({
@@ -698,6 +754,7 @@ function sendOut(lines, btn){
     if(res && res.ok){
       toast(`✓ ${res.count}개 LOT 기록 완료 (${res.firstRow}~${res.lastRow}행)`);
       if(btn){ btn.textContent='✓ 기록됨'; }
+      loadFromSheet();   // [v2] 최신 재고 + 최근 출고내역 다시 받아오기
       setTimeout(()=>goProd(), 1400);
     }else{
       toast('기록 실패: '+(res && res.error || '알 수 없는 오류'));
