@@ -148,6 +148,11 @@
   /* 오늘 출고 요약 */
   .today{ margin-top:8px; }
   .today h3{ font-size:15px; color:var(--dim); margin-bottom:10px; font-weight:700;}
+  .thead{ font-size:13px; color:var(--accent); font-weight:800; margin:14px 0 7px;
+    display:flex; justify-content:space-between; align-items:baseline; }
+  .thead-sum{ color:var(--dim); font-weight:700; }
+  .thead-break{ font-size:12.5px; color:var(--dim); margin:0 0 9px; display:flex; flex-wrap:wrap; gap:6px 12px; }
+  .thead-break .bd{ white-space:nowrap; } .thead-break .bd-c{ color:var(--txt); font-weight:800; }
   .tcard{ background:var(--card2); border-radius:12px; padding:14px 16px; margin-bottom:8px;
     display:flex; justify-content:space-between; align-items:center; font-size:15px;}
   .tcard .tl{ font-weight:700; }
@@ -259,6 +264,7 @@ let view='products', curProduct=null, curLot=null, qty='', loss=0;
 // 구글 시트 연결 주소 (운영용)
 const SHEET_URL='https://script.google.com/macros/s/AKfycby9_qw5DrF5AFT8fSByM47QOmM8YilLkaNBk0RNxV0vEr-0vjRqMAzOVvv94MRExjHN/exec';
 let todayOut=[]; // 오늘 출고 기록 (이 미리보기 안에서만)
+let RECENTS=[];  // [v2] 시트에서 받아온 최근 5일 출고기록 (화면 하단 '최근 출고 내역')
 let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 표시용)
 
 // ===== 작업자(출고관리자) =====
@@ -286,6 +292,8 @@ function loadFromSheet(opts){
       }
       // (2) 오늘 날짜
       if(res && res.today) SHEET_TODAY=res.today;
+      // [v2] 최근 5일 출고기록 (하단 '최근 출고 내역'에 표시)
+      if(res && Array.isArray(res.records)) RECENTS=res.records;
       // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
       if(res && Array.isArray(res.lots) && res.lots.length){
         LOTS = res.lots.map(l=>({
@@ -362,13 +370,43 @@ function renderProducts(){
     </div>`;
   });
   screen.innerHTML=h;
-  // 하단: 오늘 출고 요약
-  let t='<div class="today"><h3>오늘 출고한 내역</h3>';
-  if(todayOut.length===0) t+='<div class="empty">아직 없음</div>';
-  else todayOut.forEach(o=>{ t+=`<div class="tcard"><div class="tl">${prodName(o.code)} · ${o.lot}</div><div class="tr">${o.qty}개</div></div>`; });
-  t+='</div>';
-  screen.innerHTML+=t;
+  // 하단: 최근 5일 출고 내역 (시트에서 받아온 일반주문 기록)
+  screen.innerHTML+=recentOutHTML();
   footer.innerHTML='';
+}
+
+// [v2] 최근 5일 '일반주문' 출고 내역 HTML (시트 records 기준, 날짜별 묶음·최신순)
+function nameOf(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
+function fmtMD(ymd){
+  const m=(ymd||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ymd||'';
+  const md=parseInt(m[2],10)+'/'+parseInt(m[3],10);
+  return (ymd===SHEET_TODAY)? md+' (오늘)' : md;
+}
+function recentOutHTML(){
+  let t='<div class="today"><h3>최근 출고 내역 (5일)</h3>';
+  const rows=RECENTS.filter(r=>r.type==='일반주문' && r.qty>0);
+  if(rows.length===0){ t+='<div class="empty">최근 5일 일반출고 없음</div>'; return t+'</div>'; }
+  const groups=[], idx={};
+  rows.forEach(r=>{
+    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[], sum:0, byCode:{}}); }
+    const g=groups[idx[r.date]]; g.items.push(r); g.sum+=r.qty;
+    g.byCode[r.code]=(g.byCode[r.code]||0)+r.qty;
+  });
+  groups.forEach(g=>{
+    t+=`<div class="thead">${fmtMD(g.date)}<span class="thead-sum">총 ${g.sum}개</span></div>`;
+    t+=`<div class="thead-break">${breakdownLineO(g.byCode)}</div>`;
+    g.items.forEach(o=>{
+      t+=`<div class="tcard"><div class="tl">${nameOf(o.code)} · ${o.lot}${o.memo?' · '+o.memo:''}</div><div class="tr">${o.qty}개</div></div>`;
+    });
+  });
+  t+='</div>';
+  return t;
+}
+// [v2] 그날 종류별 소계 한 줄 (제품 순서, 0개는 생략). 약칭 = 코드 끝 2글자
+function breakdownLineO(byCode){
+  return PRODUCTS.filter(p=>byCode[p.code]>0)
+    .map(p=>`<span class="bd"><span class="bd-c">${p.code.slice(-2)}</span> ${byCode[p.code]}개</span>`)
+    .join('');
 }
 
 function renderLots(){
@@ -494,6 +532,7 @@ function confirmOut(){
     try{ ok = JSON.parse(txt).ok===true; }catch(e){}
     if(ok) showToast(`✓ ${prodName(l.code)} ${l.lot}<br>${n}개${loss>0?' · 로스 '+loss+'개':''} 시트에 기록됨`);
     else showToast(`⚠ 기록 안 됨<br>다시 시도하세요`);
+    if(ok) loadFromSheet();   // [v2] 최신 재고 + 최근 출고내역 다시 받아오기
   })
   .catch(err=>showToast(`⚠ 전송 오류<br>인터넷 확인 후 다시`));
 
