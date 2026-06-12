@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>에너지바 출고 입력</title>
+<link rel="manifest" href="out.webmanifest">
+<meta name="theme-color" content="#0f1b14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="출고 OUT">
+<style>
+  /* ===== 현장용 디자인 원칙 =====
+     - 장갑 낀 손/추운 창고 고려: 버튼·글씨 크게, 터치 영역 넉넉히
+     - 컴퓨터 약한 직원 고려: 한 화면 한 가지 일, 큰 단계 표시
+     - 실수 방지: 재고보다 많이 못 빼게, 확인 단계, 임박순 강조      */
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --bg:#0f1b14; --card:#17271d; --card2:#1d3327;
+    --line:#2c4636; --txt:#eafff2; --dim:#8fb8a0;
+    --accent:#36d97b; --accent-d:#1f7d48;
+    --urgent:#ff5d5d; --urgent-bg:#3a1717;
+    --warn:#ffb84d; --warn-bg:#3a2d12;
+    --safe:#4db5ff; --safe-bg:#13283a;
+  }
+  body{
+    font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;
+    background:var(--bg); color:var(--txt);
+    max-width:480px; margin:0 auto; min-height:100vh;
+    display:flex; flex-direction:column;
+  }
+  /* 상단 바 */
+  .top{
+    background:var(--card); padding:18px 20px;
+    display:flex; align-items:center; gap:12px;
+    border-bottom:2px solid var(--line); position:sticky; top:0; z-index:10;
+  }
+  .top .back{
+    font-size:28px; width:44px; height:44px; line-height:44px; text-align:center;
+    background:var(--card2); border-radius:12px; cursor:pointer; user-select:none;
+    display:none;
+  }
+  .top.has-back .back{ display:block; }
+  .top h1{ font-size:21px; font-weight:800; letter-spacing:-0.5px; }
+  .top .sub{ font-size:13px; color:var(--dim); font-weight:500; margin-top:2px; }
+  /* 단계 표시 */
+  .steps{ display:flex; gap:6px; padding:14px 20px 4px; }
+  .steps .s{ flex:1; height:6px; border-radius:3px; background:var(--line); }
+  .steps .s.on{ background:var(--accent); }
+  /* 본문 */
+  .body{ flex:1; padding:16px 20px 120px; }
+  .hint{ font-size:15px; color:var(--dim); margin:4px 0 16px; font-weight:600; }
+  /* 재고 새로고침 줄 */
+  .reload-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:4px 0 16px; }
+  .reload-btn{ flex:none; background:var(--card2); color:var(--accent); border:2px solid var(--accent-d);
+    border-radius:12px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap;
+    transition:transform .08s, opacity .15s; }
+  .reload-btn:active{ transform:scale(0.95); }
+  .reload-btn:disabled{ opacity:0.6; color:var(--dim); border-color:var(--line); }
+  /* 상품 5종 버튼 */
+  .prod{
+    width:100%; background:var(--card2); border:2px solid var(--line);
+    border-radius:18px; padding:22px 20px; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; transition:transform .08s, border-color .15s;
+  }
+  .prod:active{ transform:scale(0.98); border-color:var(--accent); }
+  .prod .pname{ font-size:23px; font-weight:800; }
+  .prod .pcode{ font-size:13px; color:var(--dim); margin-top:3px; font-weight:600; }
+  .prod .pstock{ text-align:right; }
+  .prod .pstock .n{ font-size:26px; font-weight:800; color:var(--accent); }
+  .prod .pstock .l{ font-size:12px; color:var(--dim); }
+  .dot{ width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle;}
+  /* LOT 카드 */
+  .lot{
+    width:100%; background:var(--card2); border:2px solid var(--line);
+    border-radius:16px; padding:18px; margin-bottom:12px; cursor:pointer;
+    transition:transform .08s, border-color .15s;
+  }
+  .lot:active{ transform:scale(0.98); }
+  .lot.urgent{ border-color:var(--urgent); }
+  .lot .row1{ display:flex; justify-content:space-between; align-items:baseline; }
+  .lot .lnum{ font-size:22px; font-weight:800; letter-spacing:0.5px; }
+  .lot .badge{ font-size:13px; font-weight:800; padding:5px 12px; border-radius:999px; }
+  .badge.urgent{ background:var(--urgent-bg); color:var(--urgent); }
+  .badge.warn{ background:var(--warn-bg); color:var(--warn); }
+  .badge.safe{ background:var(--safe-bg); color:var(--safe); }
+  .lot .row2{ display:flex; justify-content:space-between; margin-top:12px; align-items:flex-end;}
+  .lot .exp{ font-size:14px; color:var(--dim); font-weight:600; }
+  .lot .exp b{ color:var(--txt); font-weight:800; }
+  .lot .stock{ font-size:14px; color:var(--dim); }
+  .lot .stock b{ font-size:24px; color:var(--accent); font-weight:800; }
+  .fifo-tag{
+    display:inline-block; background:var(--accent); color:#04220f;
+    font-size:12px; font-weight:800; padding:3px 10px; border-radius:8px; margin-bottom:10px;
+  }
+  .just-tag{
+    display:inline-block; background:var(--safe-bg); color:var(--safe);
+    font-size:13px; font-weight:800; padding:4px 12px; border-radius:8px; margin-bottom:10px; margin-left:6px;
+  }
+  .lot.done{ opacity:0.42; }
+  .lot.done .lnum{ text-decoration:line-through; }
+  /* 수량 입력 패널 */
+  .qty-wrap{ text-align:center; padding-top:10px; }
+  .qty-info{ background:var(--card2); border-radius:16px; padding:18px; margin-bottom:24px; border:2px solid var(--line);}
+  .qty-info .qi-lot{ font-size:24px; font-weight:800; }
+  .qty-info .qi-meta{ font-size:14px; color:var(--dim); margin-top:6px; font-weight:600;}
+  .qty-info .qi-meta b{ color:var(--txt); }
+  .qbox{
+    font-size:64px; font-weight:800; color:var(--accent);
+    background:var(--card); border:3px solid var(--accent-d); border-radius:20px;
+    padding:24px; margin:0 0 8px; min-height:110px; display:flex; align-items:center; justify-content:center;
+  }
+  .qmax{ font-size:14px; color:var(--dim); margin-bottom:20px; font-weight:600;}
+  .qmax.over{ color:var(--urgent); font-weight:800;}
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .key{
+    background:var(--card2); border:2px solid var(--line); border-radius:16px;
+    font-size:32px; font-weight:700; padding:20px 0; cursor:pointer; color:var(--txt);
+    transition:transform .06s, background .1s;
+  }
+  .key:active{ transform:scale(0.94); background:var(--accent-d); }
+  .key.fn{ font-size:20px; color:var(--dim); }
+  /* 하단 고정 버튼 */
+  .footer{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px; padding:16px 20px 22px;
+    background:linear-gradient(transparent, var(--bg) 22%);
+  }
+  .btn{
+    width:100%; border:none; border-radius:18px; padding:22px;
+    font-size:21px; font-weight:800; cursor:pointer; color:#04220f;
+    background:var(--accent); transition:transform .08s, opacity .15s;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ background:var(--line); color:var(--dim); }
+  .btn.ghost{ background:var(--card2); color:var(--txt); border:2px solid var(--line); }
+  /* 완료 토스트 */
+  .toast{
+    position:fixed; left:50%; top:40%;
+    transform:translateX(-50%); background:var(--accent); color:#04220f;
+    padding:24px 30px; border-radius:20px; font-size:20px; font-weight:800;
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:50;
+    text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.5);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-10px); }
+  /* 오늘 출고 요약 */
+  .today{ margin-top:8px; }
+  .today h3{ font-size:15px; color:var(--dim); margin-bottom:10px; font-weight:700;}
+  .thead{ font-size:13px; color:var(--accent); font-weight:800; margin:14px 0 7px; }
+  .tcard{ background:var(--card2); border-radius:12px; padding:14px 16px; margin-bottom:8px;
+    display:flex; justify-content:space-between; align-items:center; font-size:15px;}
+  .tcard .tl{ font-weight:700; }
+  .tcard .tr{ color:var(--accent); font-weight:800; font-size:18px; }
+  .empty{ color:var(--dim); font-size:14px; text-align:center; padding:20px; }
+  .demo-note{
+    background:var(--warn-bg); color:var(--warn); font-size:13px; font-weight:600;
+    padding:10px 14px; border-radius:10px; margin:0 20px 12px; text-align:center; line-height:1.5;
+  }
+  /* 작업자(출고관리자) 선택 — 수량 화면 */
+  .worker-box{ background:var(--card2); border:2px solid var(--line); border-radius:16px;
+    padding:16px; margin-bottom:18px; text-align:left; }
+  .worker-box.need{ border-color:var(--warn); }
+  .worker-label{ font-size:14px; font-weight:700; color:var(--dim); margin-bottom:10px; }
+  .worker-label .req{ color:var(--warn); font-weight:800; }
+  .worker-select{ width:100%; height:60px; border-radius:14px; background:var(--card);
+    color:var(--txt); border:2px solid var(--accent-d); font-size:22px; font-weight:700;
+    padding:0 16px; -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24' fill='none' stroke='%238fb8a0' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right 16px center; }
+  .worker-select:focus{ outline:none; border-color:var(--accent); }
+  .worker-select.unset{ color:var(--warn); border-color:var(--warn); }
+  .worker-hint{ font-size:13.5px; color:var(--warn); margin-top:10px; font-weight:600; }
+  /* 유통기한 표시 — 수량 화면 */
+  .exp-notice{ background:var(--safe-bg); border:2px solid #2f5a6e; border-radius:16px;
+    padding:16px; margin-bottom:18px; text-align:left; }
+  .exp-notice .en-label{ font-size:13px; color:var(--safe); font-weight:700; letter-spacing:.3px; }
+  .exp-notice .en-date{ font-size:26px; font-weight:800; color:#bfe6ff; margin-top:4px; }
+  .exp-notice .en-sub{ font-size:13px; color:var(--dim); margin-top:4px; font-weight:600; }
+  /* 물류로스 입력칸 — 수량 화면 (선택사항, 깨짐·불량 시에만) */
+  .loss-box{ background:var(--card2); border:2px solid var(--line); border-radius:16px;
+    padding:16px; margin-bottom:18px; text-align:left; }
+  .loss-box.on{ border-color:var(--warn); }
+  .loss-label{ font-size:14px; font-weight:700; color:var(--dim); margin-bottom:4px; }
+  .loss-sub{ font-size:12.5px; color:var(--dim); margin-bottom:10px; font-weight:600; }
+  .loss-row{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .loss-input{ flex:1; min-width:0; width:100%; height:56px; border-radius:14px; background:var(--card);
+    border:2px solid var(--line); color:var(--txt); font-size:24px; font-weight:800;
+    text-align:center; }
+  .loss-input:focus{ outline:none; border-color:var(--warn); }
+  .loss-input.has{ border-color:var(--warn); color:var(--warn); }
+  .loss-unit{ flex:none; white-space:nowrap; font-size:16px; font-weight:700; color:var(--dim); }
+</style>
+</head>
+<body>
+  <div class="top" id="top">
+    <div class="back" id="back">‹</div>
+    <div>
+      <h1 id="title">에너지바 출고</h1>
+      <div class="sub" id="sub">상품을 선택하세요</div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="s on" id="st1"></div>
+    <div class="s" id="st2"></div>
+    <div class="s" id="st3"></div>
+  </div>
+
+  <div class="demo-note">※ 운영 시트에 실제로 기록됩니다. 정확히 확인 후 입력하세요.</div>
+
+  <div class="body" id="screen"></div>
+
+  <div class="footer" id="footer"></div>
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ===== 실제 LOT 데이터 (LOT재고_운영 시트에서 가져옴, 재고>0만) ===== */
+const PRODUCTS = [
+  {code:'EAE1CR', name:'크랜베리', color:'#ff5d5d'},
+  {code:'EAE1CA', name:'카카오',   color:'#a06a3f'},
+  {code:'EAE1ST', name:'스트로베리', color:'#ff7eb0'},
+  {code:'EAE1BK', name:'블랙',     color:'#9da3ad'},
+  {code:'EAE1NU', name:'통견과',   color:'#ffb84d'},
+];
+/* ===== LOT 데이터 =====
+   평소엔 페이지가 켜질 때 loadFromSheet()가 시트의 'LOT재고(운영)'에서
+   실시간으로 받아와 이 배열을 통째로 교체한다(화면 재고 = 시트 재고).
+   아래 값들은 시트에서 못 받아왔을 때(네트워크/CORS 등) 쓰는 "대비용 기본값"일 뿐이다.
+   ※ 화면에 옛 숫자(예: 크랜베리 1076)가 보이면 시트에서 못 받아온 것 → '재고 새로고침' 누르거나 새로고침. */
+let LOTS = [
+  {lot:'260320B',code:'EAE1CA',stock:13, exp:'2026-06-18',days:62},
+  {lot:'260323B',code:'EAE1CA',stock:94, exp:'2026-06-21',days:65},
+  {lot:'260327A',code:'EAE1ST',stock:76, exp:'2026-06-25',days:69},
+  {lot:'260330A',code:'EAE1ST',stock:136,exp:'2026-06-28',days:72},
+  {lot:'260330B',code:'EAE1CA',stock:136,exp:'2026-06-28',days:72},
+  {lot:'260402A',code:'EAE1ST',stock:170,exp:'2026-07-01',days:75},
+  {lot:'260402C',code:'EAE1CA',stock:147,exp:'2026-07-01',days:75},
+  {lot:'260403A',code:'EAE1CR',stock:230,exp:'2026-07-02',days:76},
+  {lot:'260406A',code:'EAE1ST',stock:11, exp:'2026-07-05',days:79},
+  {lot:'260406B',code:'EAE1BK',stock:26, exp:'2026-07-05',days:79},
+  {lot:'260407A',code:'EAE1BK',stock:181,exp:'2026-07-06',days:80},
+  {lot:'260409A',code:'EAE1CR',stock:345,exp:'2026-07-08',days:82},
+  {lot:'260412B',code:'EAE1BK',stock:34, exp:'2026-07-11',days:85},
+  {lot:'260413A',code:'EAE1NU',stock:191,exp:'2026-07-12',days:86},
+  {lot:'260413B',code:'EAE1BK',stock:135,exp:'2026-07-12',days:86},
+  {lot:'260414A',code:'EAE1NU',stock:136,exp:'2026-07-13',days:87},
+  {lot:'260414B',code:'EAE1BK',stock:204,exp:'2026-07-13',days:87},
+  {lot:'260414C',code:'EAE1CR',stock:33, exp:'2026-07-13',days:87},
+  {lot:'260414D',code:'EAE1NU',stock:167,exp:'2026-07-13',days:87},
+  {lot:'260414E',code:'EAE1BK',stock:101,exp:'2026-07-13',days:87},
+  {lot:'260415A',code:'EAE1ST',stock:197,exp:'2026-07-14',days:88},
+  {lot:'260415B',code:'EAE1CA',stock:132,exp:'2026-07-14',days:88},
+  {lot:'260416A',code:'EAE1CA',stock:136,exp:'2026-07-15',days:89},
+  {lot:'260416B',code:'EAE1CR',stock:136,exp:'2026-07-15',days:89},
+  {lot:'260416C',code:'EAE1CR',stock:332,exp:'2026-07-15',days:89},
+];
+
+let view='products', curProduct=null, curLot=null, qty='', loss=0;
+// 구글 시트 연결 주소 (운영용)
+const SHEET_URL='https://script.google.com/macros/s/AKfycbwK_baIu0IK4Dn4oPXyr3K5_dUPYeNC-HAABJ55mWwrdsSN0SjgG2-djwHvlaohkbV5/exec';
+let todayOut=[]; // 오늘 출고 기록 (이 미리보기 안에서만)
+let RECENTS=[];  // [v2] 시트에서 받아온 최근 5일 출고기록 (화면 하단 '최근 출고 내역')
+let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 표시용)
+
+// ===== 작업자(출고관리자) =====
+// 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
+// (받아오면 시트 최신값으로 덮어씀 → 시트만 고치면 화면도 따라옴)
+let WORKERS=['김현정','이성은','김경희','이정훈','문예지','한규리','최보경','배인경'];
+let currentWorker='';  // 직전에 고른 작업자 기억(같은 사람이 LOT 여러 개 연달아 찍을 때 편함)
+
+// 페이지 열릴 때(또는 '재고 새로고침' 버튼) 시트에서 한 번에 받아온다.
+//   workers(작업자) + lots(현재 LOT 재고) + today(오늘 날짜)
+// 실패해도 화면은 기본 목록·기본 LOT(코드 박힌 샘플)으로 계속 동작.
+let SHEET_TODAY='';   // 시트가 알려준 오늘 날짜(받기 전엔 빈값)
+function loadFromSheet(opts){
+  opts = opts || {};
+  if(SHEET_URL.indexOf('http')!==0) return;
+  if(opts.btn){ opts.btn.disabled=true; opts.btn.textContent='불러오는 중…'; }
+  fetch(SHEET_URL,{method:'GET'})
+    .then(r=>r.json())
+    .then(res=>{
+      // (1) 작업자 목록
+      if(res && Array.isArray(res.workers) && res.workers.length){
+        WORKERS=res.workers;
+        const sel=document.getElementById('workerSelect');
+        if(sel) fillWorkerSelect(sel);   // 수량 화면이 떠 있으면 다시 채움
+      }
+      // (2) 오늘 날짜
+      if(res && res.today) SHEET_TODAY=res.today;
+      // [v2] 최근 5일 출고기록 (하단 '최근 출고 내역'에 표시)
+      if(res && Array.isArray(res.records)) RECENTS=res.records;
+      // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
+      if(res && Array.isArray(res.lots) && res.lots.length){
+        LOTS = res.lots.map(l=>({
+          lot:   l.lot,
+          code:  l.code,
+          stock: Number(l.stock)||0,
+          exp:   l.exp || '',
+          days:  (l.left!=null ? Number(l.left) : 0)   // ← left→days 매핑
+        }));
+        // 상품/LOT 화면이 떠 있으면 새 재고로 다시 그림 (수량 입력 중이면 건드리지 않음)
+        if(view==='products' || view==='lots') render();
+      }
+      if(opts.btn){ opts.btn.textContent='✓ 최신 재고 받음'; setTimeout(()=>resetReloadBtn(opts.btn),1500); }
+    })
+    .catch(err=>{
+      console.log('시트에서 받아오기 실패 — 기본값 사용:', err);
+      if(opts.btn){ opts.btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>resetReloadBtn(opts.btn),1800); }
+    });
+}
+// 이전 이름(loadWorkers)으로도 부를 수 있게 별칭 유지
+function loadWorkers(){ loadFromSheet(); }
+function resetReloadBtn(btn){ if(btn){ btn.disabled=false; btn.textContent='🔄 재고 새로고침'; } }
+function fillWorkerSelect(sel){
+  const opts=['<option value="">— 작업자 선택 —</option>']
+    .concat(WORKERS.map(w=>`<option value="${w}" ${w===currentWorker?'selected':''}>${w}</option>`));
+  sel.innerHTML=opts.join('');
+  sel.value=currentWorker||'';
+  sel.classList.toggle('unset', !sel.value);
+}
+function onWorkerChange(sel){
+  currentWorker=sel.value||'';
+  sel.classList.toggle('unset', !currentWorker);
+  render();   // 버튼 잠금/해제 + 안내 갱신
+}
+function workerOk(){ return !!currentWorker; }
+
+const $=id=>document.getElementById(id);
+const screen=$('screen'), footer=$('footer'), topBar=$('top');
+
+function prodName(code){ return PRODUCTS.find(p=>p.code===code).name; }
+function prodColor(code){ return PRODUCTS.find(p=>p.code===code).color; }
+function stockOf(code){ return LOTS.filter(l=>l.code===code).reduce((s,l)=>s+l.stock,0); }
+function badge(days){
+  if(days<40) return ['urgent','임박 D-'+days];
+  if(days<60) return ['warn','D-'+days];
+  return ['safe','D-'+days];
+}
+
+function render(){
+  // 단계 표시
+  $('st1').className='s on';
+  $('st2').className='s'+(view==='lots'||view==='qty'?' on':'');
+  $('st3').className='s'+(view==='qty'?' on':'');
+  topBar.className='top'+(view!=='products'?' has-back':'');
+
+  if(view==='products') renderProducts();
+  else if(view==='lots') renderLots();
+  else if(view==='qty') renderQty();
+}
+
+function renderProducts(){
+  $('title').textContent='에너지바 출고';
+  $('sub').textContent='① 상품을 선택하세요';
+  let h=`<div class="reload-row">
+      <span class="hint" style="margin:0;">어떤 에너지바를 출고하나요?</span>
+      <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
+    </div>`;
+  PRODUCTS.forEach(p=>{
+    const st=stockOf(p.code);
+    h+=`<div class="prod" onclick="pickProduct('${p.code}')">
+      <div><div class="pname"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
+      <div class="pcode">${p.code}</div></div>
+      <div class="pstock"><div class="n">${st}</div><div class="l">총 재고</div></div>
+    </div>`;
+  });
+  screen.innerHTML=h;
+  // 하단: 최근 5일 출고 내역 (시트에서 받아온 일반주문 기록)
+  screen.innerHTML+=recentOutHTML();
+  footer.innerHTML='';
+}
+
+// [v2] 최근 5일 '일반주문' 출고 내역 HTML (시트 records 기준, 날짜별 묶음·최신순)
+function nameOf(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
+function fmtMD(ymd){
+  const m=(ymd||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ymd||'';
+  const md=parseInt(m[2],10)+'/'+parseInt(m[3],10);
+  return (ymd===SHEET_TODAY)? md+' (오늘)' : md;
+}
+function recentOutHTML(){
+  let t='<div class="today"><h3>최근 출고 내역 (5일)</h3>';
+  const rows=RECENTS.filter(r=>r.type==='일반주문' && r.qty>0);
+  if(rows.length===0){ t+='<div class="empty">최근 5일 일반출고 없음</div>'; return t+'</div>'; }
+  const groups=[], idx={};
+  rows.forEach(r=>{
+    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[]}); }
+    groups[idx[r.date]].items.push(r);
+  });
+  groups.forEach(g=>{
+    t+=`<div class="thead">${fmtMD(g.date)}</div>`;
+    g.items.forEach(o=>{
+      t+=`<div class="tcard"><div class="tl">${nameOf(o.code)} · ${o.lot}${o.memo?' · '+o.memo:''}</div><div class="tr">${o.qty}개</div></div>`;
+    });
+  });
+  t+='</div>';
+  return t;
+}
+
+function renderLots(){
+  const p=PRODUCTS.find(x=>x.code===curProduct);
+  $('title').textContent=p.name+' 출고';
+  $('sub').textContent='② 꺼낸 LOT을 선택하세요';
+  // 재고 남은 것(임박순) 먼저, 재고 0은 맨 아래로
+  const all=LOTS.filter(l=>l.code===curProduct);
+  const live=all.filter(l=>l.stock>0).sort((a,b)=>a.days-b.days);
+  const done=all.filter(l=>l.stock<=0).sort((a,b)=>a.days-b.days);
+  const list=[...live,...done];
+  let h='<div class="hint">유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 꺼내세요.</div>';
+  let firstLive=true;
+  list.forEach((l)=>{
+    const [cls,txt]=badge(l.days);
+    const empty=l.stock<=0;
+    const just=justOut[l.lot];
+    const fifo=(!empty && firstLive);
+    if(!empty) firstLive=false;
+    h+=`<div class="lot ${l.days<40&&!empty?'urgent':''} ${empty?'done':''}" onclick="${empty?'':`pickLot('${l.lot}')`}">
+      ${fifo?'<div class="fifo-tag">먼저 빼세요 (선입선출)</div>':''}
+      ${just?`<div class="just-tag">✓ 방금 ${just}개 출고함</div>`:''}
+      <div class="row1"><div class="lnum">${l.lot}</div><div class="badge ${cls}">${txt}</div></div>
+      <div class="row2"><div class="exp">유통기한 <b>${l.exp}</b></div>
+      <div class="stock">${empty?'<b style="color:var(--dim)">출고 완료</b>':'재고 <b>'+l.stock+'</b>개'}</div></div>
+    </div>`;
+  });
+  screen.innerHTML=h;
+  // 이 상품 출고를 마쳤으면 상품 선택으로 나가는 버튼
+  footer.innerHTML=`<button class="btn ghost" onclick="goProducts()">${p.name} 출고 끝 · 상품 선택으로</button>`;
+}
+function goProducts(){ history.back(); }
+
+function renderQty(){
+  const l=LOTS.find(x=>x.lot===curLot);
+  const p=PRODUCTS.find(x=>x.code===l.code);
+  $('title').textContent='수량 입력';
+  $('sub').textContent='③ 몇 개 꺼냈나요?';
+  const n=qty===''?0:parseInt(qty);
+  const over=n>l.stock;
+  let h=`<div class="qty-wrap">
+    <div class="qty-info">
+      <div class="qi-lot"><span class="dot" style="background:${p.color}"></span>${p.name} · ${l.lot}</div>
+      <div class="qi-meta">유통기한 <b>${l.exp}</b> · 현재재고 <b>${l.stock}개</b></div>
+    </div>
+    <div class="qbox" style="${over?'border-color:var(--urgent);color:var(--urgent)':''}">${qty===''?'0':qty}</div>
+    <div class="qmax ${over?'over':''}">${over?'⚠ 재고('+l.stock+'개)보다 많아요!':'최대 '+l.stock+'개까지'}</div>
+    <div class="pad">`;
+  ['1','2','3','4','5','6','7','8','9'].forEach(k=>h+=`<button class="key" onclick="press('${k}')">${k}</button>`);
+  h+=`<button class="key fn" onclick="press('C')">지움</button>
+      <button class="key" onclick="press('0')">0</button>
+      <button class="key fn" onclick="press('B')">←</button>`;
+  h+='</div>';
+  // 유통기한 표시 (이 LOT 기준) — 물류 모두가 알아야 할 정보 · 창고에서 PDA처럼 바로 참고
+  h+=`<div class="exp-notice">
+        <div class="en-label">📅 이 LOT 유통기한</div>
+        <div class="en-date">${l.exp}</div>
+        <div class="en-sub">이 LOT(${l.lot}) 기준 · 남은 ${l.days}일</div>
+      </div>`;
+  // 작업자(출고관리자) 선택
+  h+=`<div class="worker-box ${workerOk()?'':'need'}" id="workerBox">
+        <div class="worker-label">출고관리자 <span class="req">*</span> <span style="font-weight:600;">(누가 입력하나요)</span></div>
+        <select class="worker-select" id="workerSelect" onchange="onWorkerChange(this)"></select>
+        ${workerOk()?'':'<div class="worker-hint">⚠ 작업자를 선택해야 출고를 기록할 수 있어요</div>'}
+      </div>`;
+  // 물류로스 입력 (선택) — 깨짐·불량이 있을 때만. 평소엔 0으로 두면 됨.
+  h+=`<div class="loss-box ${loss>0?'on':''}" id="lossBox">
+        <div class="loss-label">물류로스 <span style="font-weight:600;color:var(--dim);">(깨짐·불량 — 없으면 0)</span></div>
+        <div class="loss-sub">이 LOT에서 못 쓰게 된 개수만 적으세요. 출고수량과 별개로 차감됩니다.</div>
+        <div class="loss-row">
+          <input class="loss-input ${loss>0?'has':''}" id="lossInput" inputmode="numeric"
+            value="${loss>0?loss:''}" placeholder="0" oninput="onLossInput(this)">
+          <span class="loss-unit">개 로스</span>
+        </div>
+      </div>`;
+  h+='</div>';
+  screen.innerHTML=h;
+  fillWorkerSelect($('workerSelect'));   // 드롭다운 채우기(기억된 작업자 미리 선택)
+  footer.innerHTML=`<button class="btn" ${(n<=0||over||!workerOk())?'disabled':''} onclick="confirmOut()">출고 기록하기</button>`;
+}
+
+function pickProduct(code){ curProduct=code; view='lots'; pushStep(); render(); }
+function pickLot(lot){ curLot=lot; qty=''; loss=0; view='qty'; pushStep(); render(); }
+function onLossInput(el){
+  let v=parseInt(el.value.replace(/[^0-9]/g,''))||0;
+  loss=v;
+  el.classList.toggle('has',v>0);
+  const box=$('lossBox'); if(box) box.classList.toggle('on',v>0);
+}
+function press(k){
+  if(k==='C') qty='';
+  else if(k==='B') qty=qty.slice(0,-1);
+  else { if(qty.length<5) qty=(qty==='0'?'':qty)+k; }
+  render();
+}
+function confirmOut(){
+  if(!workerOk()){ showToast('⚠ 작업자(출고관리자)를<br>먼저 선택하세요'); return; }
+  const l=LOTS.find(x=>x.lot===curLot);
+  const n=parseInt(qty);
+  const stockBefore=l.stock;       // 차감 전 재고 (참고용)
+  const manager=currentWorker;
+  l.stock-=n;                      // 화면 안에서 재고 차감
+  todayOut.unshift({code:l.code,lot:l.lot,qty:n});
+  justOut[l.lot]=(justOut[l.lot]||0)+n;
+
+  // 구글 시트로 전송 — 그로스와 같은 통합 스크립트가 받는 형식으로 통일
+  //   { type:'normal', otype:'일반주문', manager, lines:[{lot,qty,loss?,memo}] }
+  //   loss는 깨짐·불량이 있을 때만 음수로 보냄(시트 G열). H=E−G 수식이 실출고를 계산.
+  //   C(현재재고)·D(상품코드)·H(실출고)는 시트의 자동 수식이 채우므로 보내지 않음.
+  const line={ lot:l.lot, qty:n, memo:'' };
+  if(loss>0) line.loss=-loss;          // 화면은 양수 입력 → 시트엔 음수로
+  showToast(`전송 중…`);
+  fetch(SHEET_URL,{
+    method:'POST',
+    body:JSON.stringify({
+      type:'normal', otype:'일반주문', manager,
+      lines:[line]
+    })
+  })
+  .then(r=>r.text())
+  .then(txt=>{
+    let ok=false;
+    try{ ok = JSON.parse(txt).ok===true; }catch(e){}
+    if(ok) showToast(`✓ ${prodName(l.code)} ${l.lot}<br>${n}개${loss>0?' · 로스 '+loss+'개':''} 시트에 기록됨`);
+    else showToast(`⚠ 기록 안 됨<br>다시 시도하세요`);
+    if(ok) loadFromSheet();   // [v2] 최신 재고 + 최근 출고내역 다시 받아오기
+  })
+  .catch(err=>showToast(`⚠ 전송 오류<br>인터넷 확인 후 다시`));
+
+  // 같은 상품의 LOT 목록으로 복귀 (여러 LOT 연달아 출고)
+  curLot=null; qty=''; loss=0; history.back();
+}
+function showToast(msg){
+  const t=$('toast'); t.innerHTML=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+// ===== 시스템 뒤로가기(안드로이드 ← 버튼) 처리 =====
+// 단계가 깊어질 때 히스토리를 한 칸 쌓고, 뒤로가기(popstate)가 오면 한 단계만 내려간다.
+// 화면 안 ‹ 버튼·기록 후 복귀도 history.back()으로 통일 → "히스토리 1칸 = 화면 1단계" 유지.
+function pushStep(){ history.pushState({view:view}, ''); }
+function stepBack(){
+  if(view==='qty'){ view='lots'; }
+  else if(view==='lots'){ view='products'; curProduct=null; justOut={}; }
+  render();
+}
+window.addEventListener('popstate', ()=>{ stepBack(); });
+$('back').onclick=()=>{ history.back(); };  // 시스템 뒤로가기와 같은 경로로 처리
+render();
+loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜 받아오기(실패해도 기본값으로 동작)
+</script>
+</body>
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>에너지바 그로스 출고</title>
+<link rel="manifest" href="gross.webmanifest">
+<meta name="theme-color" content="#0f1419">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="그로스 GR">
+<style>
+  :root{
+    --bg:#0f1419; --panel:#1a2129; --panel2:#222c37; --line:#2f3b48;
+    --text:#eef3f7; --dim:#8a99a8; --accent:#3da9fc; --accent2:#2e8bd6;
+    --warn:#ff5a5a; --warn-bg:#3a1f22; --ok:#36c98a; --gold:#f5b342;
+    --yday:#caa24a; --yday-bg:#33291260;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,'Noto Sans KR',sans-serif;font-size:17px;line-height:1.4;}
+  body{padding:0 0 40px;}
+  .wrap{max-width:520px;margin:0 auto;padding:14px;}
+
+  header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0f1419 70%,rgba(15,20,25,0));
+    padding:12px 14px 8px;}
+  .htitle{font-size:20px;font-weight:800;letter-spacing:-.3px;}
+  .hsub{font-size:13px;color:var(--dim);margin-top:2px;}
+  .badge-gross{display:inline-block;background:#243b2e;color:#7fe3b0;font-size:12px;
+    font-weight:700;padding:2px 9px;border-radius:20px;margin-left:6px;vertical-align:middle;}
+
+  .step-label{font-size:13px;color:var(--accent);font-weight:700;margin:14px 4px 8px;
+    text-transform:uppercase;letter-spacing:.5px;}
+  .prod-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 4px 8px;}
+  .reload-btn{flex:none;background:var(--panel2);color:var(--accent);border:2px solid var(--accent2);
+    border-radius:12px;padding:9px 13px;font-size:13.5px;font-weight:800;cursor:pointer;white-space:nowrap;
+    transition:transform .08s,opacity .15s;}
+  .reload-btn:active{transform:scale(.95);}
+  .reload-btn:disabled{opacity:.6;color:var(--dim);border-color:var(--line);}
+
+  .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .prod-btn{background:var(--panel);border:2px solid var(--line);border-radius:16px;
+    padding:18px 12px;text-align:center;cursor:pointer;transition:.12s;user-select:none;}
+  .prod-btn:active{transform:scale(.97);}
+  .prod-btn .pname{font-size:19px;font-weight:800;}
+  .prod-btn .pcode{font-size:12px;color:var(--dim);margin-top:3px;letter-spacing:.5px;}
+  .prod-btn.mix{grid-column:1/3;background:linear-gradient(135deg,#2a2140,#1f2937);border-color:#52407a;}
+  .prod-btn.mix .pname{color:#c9b3ff;}
+
+  .qty-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .qty-row{display:flex;align-items:center;gap:10px;}
+  .qbtn{width:54px;height:54px;border-radius:14px;border:none;font-size:24px;font-weight:800;
+    background:var(--panel2);color:var(--text);cursor:pointer;flex:none;}
+  .qbtn:active{background:#2c3947;}
+  .qfield{flex:1;text-align:center;}
+  .qbig-input{width:100%;text-align:center;font-size:40px;font-weight:800;line-height:1;
+    background:#0d1620;border:2px solid var(--accent2);border-radius:12px;color:var(--text);
+    padding:6px 0;}
+  .qbig-input:focus{outline:none;border-color:var(--accent);}
+  .qunit{font-size:13px;color:var(--dim);margin-top:6px;}
+  .calc-note{font-size:13.5px;color:var(--dim);margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);}
+  .calc-note b{color:var(--text);}
+
+  /* MIX 출고가능 사전 점검 */
+  .precheck{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+  .pc-head{padding:10px 14px;font-weight:800;font-size:14px;}
+  .pc-head.ok{background:#14331f;color:#8fe6b6;}
+  .pc-head.bad{background:#3a1f22;color:#ffb0b0;}
+  .pc-row{display:flex;justify-content:space-between;padding:8px 14px;font-size:14px;
+    border-top:1px solid var(--line);background:var(--panel);}
+  .pc-row .pc-name{font-weight:700;}
+  .pc-row .pc-ok{color:var(--ok);}
+  .pc-row .pc-bad{color:var(--warn);font-weight:700;}
+
+  .rec-head{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 4px;}
+  .rec-title{font-size:16px;font-weight:800;}
+  .rec-target{font-size:13px;color:var(--dim);}
+  .rec-rule{font-size:12.5px;color:var(--dim);margin:0 2px 12px;}
+
+  .lot-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;
+    position:relative;transition:.15s;}
+  .lot-card.yday{border-color:var(--yday);background:linear-gradient(90deg,var(--yday-bg),var(--panel) 60%);}
+  /* 실제 출고하기로 한(수량>0) LOT 강조 */
+  .lot-card.picked{border-color:var(--ok);background:linear-gradient(90deg,#13301f,#1a2129 70%);
+    box-shadow:0 0 0 2px rgba(54,201,138,.25);}
+  .lot-card.picked.yday{border-color:var(--ok);
+    background:linear-gradient(90deg,#1c2f17,var(--yday-bg) 55%,#1a2129);}
+  .lot-check{position:absolute;left:-7px;top:-7px;width:24px;height:24px;border-radius:50%;
+    background:var(--ok);color:#03200f;font-size:15px;font-weight:900;display:none;
+    align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+  .lot-card.picked .lot-check{display:flex;}
+  .lot-main{flex:1;min-width:0;}
+  .lot-code{font-size:18px;font-weight:800;letter-spacing:.5px;}
+  .lot-meta{font-size:12.5px;color:var(--dim);margin-top:3px;}
+  .exp-pill{display:inline-block;background:#243140;color:#bcd3e8;font-size:12px;font-weight:700;
+    padding:2px 8px;border-radius:8px;margin-left:2px;}
+  .exp-pill.far{background:#1f3a2c;color:#8fe6b6;}
+  .yday-tag{display:inline-block;background:var(--yday);color:#221a06;font-size:11px;font-weight:800;
+    padding:2px 8px;border-radius:8px;margin-top:5px;}
+  .lot-qty-box{flex:none;text-align:center;}
+  .lot-qty-input{width:72px;height:50px;border-radius:12px;border:2px solid var(--accent2);
+    background:#0d1620;color:var(--text);font-size:23px;font-weight:800;text-align:center;}
+  .lot-qty-input:focus{outline:none;border-color:var(--accent);}
+  .lot-qty-input.over{border-color:var(--warn);background:var(--warn-bg);}
+  .lot-qty-input.has{border-color:var(--ok);background:#0e2418;color:#7cf0b4;}
+  .lot-qty-cap{font-size:11px;color:var(--dim);margin-top:3px;}
+  /* LOT별 물류로스 입력칸 (선택) — 수량칸 아래 작게 */
+  .lot-loss-row{margin-top:6px;display:flex;align-items:center;justify-content:center;gap:4px;}
+  .lot-loss-input{width:72px;height:34px;border-radius:10px;border:2px solid var(--line);
+    background:#1a1410;color:var(--dim);font-size:15px;font-weight:700;text-align:center;}
+  .lot-loss-input:focus{outline:none;border-color:var(--warn);}
+  .lot-loss-input.has{border-color:var(--warn);background:#2a1c10;color:var(--warn);}
+  .lot-loss-cap{font-size:10px;color:var(--dim);margin-top:2px;}
+
+  .kind-block{margin-bottom:6px;}
+  .kind-bar{display:flex;justify-content:space-between;align-items:baseline;
+    padding:8px 4px 6px;border-bottom:2px solid var(--line);margin-bottom:10px;}
+  .kind-name{font-size:17px;font-weight:800;}
+  .kind-sum{font-size:14px;font-weight:800;}
+  .kind-sum .done{color:var(--ok);} .kind-sum .miss{color:var(--warn);}
+
+  .rec-foot{background:var(--panel2);border-radius:14px;padding:14px;margin-top:6px;}
+  .rec-sum{display:flex;justify-content:space-between;font-size:15px;font-weight:700;}
+  .rec-sum .miss{color:var(--warn);} .rec-sum .done{color:var(--ok);}
+
+  .exp-notice{background:#1c2a1f;border:1px solid #2f5a3d;border-radius:12px;padding:12px 14px;margin-top:12px;}
+  .exp-notice .en-label{font-size:12px;color:#8fe6b6;font-weight:700;letter-spacing:.5px;}
+  .exp-notice .en-date{font-size:22px;font-weight:800;color:#bff0d2;margin-top:2px;}
+  .exp-notice .en-sub{font-size:12px;color:var(--dim);margin-top:3px;}
+
+  /* 작업자(출고관리자) 선택 */
+  .worker-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin-top:14px;}
+  .worker-box.need{border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,179,66,.18);}
+  .worker-label{font-size:13px;font-weight:700;color:var(--dim);margin-bottom:8px;display:flex;
+    align-items:center;gap:6px;}
+  .worker-label .req{color:var(--gold);font-weight:800;}
+  .worker-select{width:100%;height:56px;border-radius:12px;background:#0d1620;color:var(--text);
+    border:2px solid var(--accent2);font-size:20px;font-weight:700;padding:0 14px;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238a99a8' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;}
+  .worker-select:focus{outline:none;border-color:var(--accent);}
+  .worker-select.unset{color:var(--gold);border-color:var(--gold);}
+  .worker-hint{font-size:12.5px;color:var(--gold);margin-top:8px;font-weight:600;}
+
+  .btn{display:block;width:100%;border:none;border-radius:16px;padding:18px;
+    font-size:19px;font-weight:800;cursor:pointer;margin-top:14px;}
+  .btn-primary{background:var(--accent);color:#04243d;}
+  .btn-primary:active{background:var(--accent2);}
+  .btn-primary:disabled{background:#2a3540;color:#5a6873;cursor:not-allowed;}
+  .btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--line);font-size:15px;padding:13px;}
+
+  .hidden{display:none!important;}
+  .back-link{font-size:14px;color:var(--accent);cursor:pointer;padding:6px 0;display:inline-block;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#143524;color:#bff0d2;
+    padding:14px 22px;border-radius:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:100;border:1px solid #2f5a3d;}
+
+  /* [v2] 최근 출고 내역 */
+  .hist{margin-top:20px;}
+  .hist-h{font-size:14px;color:var(--dim);font-weight:700;margin:0 4px 10px;}
+  .hist-empty{color:var(--dim);font-size:13px;text-align:center;padding:16px;}
+  .hist-date{font-size:13px;color:var(--accent);font-weight:800;margin:14px 4px 7px;
+    display:flex;justify-content:space-between;align-items:baseline;}
+  .hist-sum{color:var(--dim);font-weight:700;}
+  .hist-row{display:flex;justify-content:space-between;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:14px;gap:10px;}
+  .hist-l{font-weight:600;min-width:0;} .hist-r{color:var(--accent);font-weight:800;flex:none;}
+</style>
+</head>
+<body>
+<header>
+  <div class="htitle">그로스 출고<span class="badge-gross">로켓그로스</span></div>
+  <div class="hsub" id="hsub">출고할 상품을 선택하세요</div>
+</header>
+
+<div class="wrap">
+  <section id="screen-prod">
+    <div class="prod-head">
+      <div class="step-label" style="margin:0;">1. 상품 선택</div>
+      <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
+    </div>
+    <div class="prod-grid" id="prodGrid"></div>
+    <div id="grossHist"></div>
+  </section>
+
+  <section id="screen-qty" class="hidden">
+    <span class="back-link" onclick="goProd()">‹ 상품 다시 선택</span>
+    <div class="step-label" id="qtyLabel">2. 출고 수량</div>
+    <div class="qty-card" id="qtyCard"></div>
+    <div id="precheckArea"></div>
+    <button class="btn btn-primary" id="toRecBtn" onclick="goRec()">추천 받기 ›</button>
+  </section>
+
+  <section id="screen-rec" class="hidden">
+    <span class="back-link" onclick="goQty()">‹ 수량 다시 입력</span>
+    <div id="recArea"></div>
+  </section>
+</div>
+
+<script>
+// ===== LOT 데이터 =====
+//   평소엔 페이지가 켜질 때 loadFromSheet()가 시트 'LOT재고(운영)'에서 실시간으로 받아와
+//   SAMPLE과 TODAY를 통째로 교체한다(화면 재고 = 시트 재고).
+//   아래 값들은 시트에서 못 받아왔을 때(네트워크/CORS 등) 쓰는 "대비용 기본값"일 뿐이다.
+//   ※ const → let : 받아온 값으로 교체할 수 있어야 하므로.
+let TODAY='2026-05-27';
+let SAMPLE=[
+  {lot:'260511A',code:'EAE1CR',name:'크랜베리',stock:3,  exp:'2026-08-09',left:74},
+  {lot:'260512C',code:'EAE1CR',name:'크랜베리',stock:306,exp:'2026-08-10',left:75},
+  {lot:'260514C',code:'EAE1CR',name:'크랜베리',stock:15, exp:'2026-08-12',left:77},
+  {lot:'260519C',code:'EAE1NU',name:'통견과',  stock:41, exp:'2026-08-17',left:82},
+  {lot:'260520A',code:'EAE1BK',name:'블랙',    stock:16, exp:'2026-08-18',left:83},
+  {lot:'260520B',code:'EAE1ST',name:'스트로베리',stock:52,exp:'2026-08-18',left:83},
+  {lot:'260521A',code:'EAE1ST',name:'스트로베리',stock:46,exp:'2026-08-19',left:84},
+  {lot:'260522A',code:'EAE1CA',name:'카카오',  stock:103,exp:'2026-08-20',left:85},
+  {lot:'260522B',code:'EAE1BK',name:'블랙',    stock:74, exp:'2026-08-20',left:85},
+  {lot:'260522C',code:'EAE1BK',name:'블랙',    stock:408,exp:'2026-08-20',left:85},
+  {lot:'260524A',code:'EAE1NU',name:'통견과',  stock:10, exp:'2026-08-22',left:87},
+  {lot:'260526A',code:'EAE1CA',name:'카카오',  stock:150,exp:'2026-08-24',left:89},
+  {lot:'260526B',code:'EAE1ST',name:'스트로베리',stock:157,exp:'2026-08-24',left:89},
+  {lot:'260526C',code:'EAE1BK',name:'블랙',    stock:170,exp:'2026-08-24',left:89},
+  {lot:'260526D',code:'EAE1NU',name:'통견과',  stock:237,exp:'2026-08-24',left:89},
+];
+const PRODUCTS=[
+  {code:'EAE1CR',name:'크랜베리'},{code:'EAE1CA',name:'카카오'},
+  {code:'EAE1ST',name:'스트로베리'},{code:'EAE1BK',name:'블랙'},{code:'EAE1NU',name:'통견과'},
+];
+const PER_KIND_PER_SET=8;   // MIX 1세트 = 종류별 8개
+const SETS_PER_BOX=12;      // 1박스 = 12세트 (참고 표기용)
+
+function yesterdayYYMMDD(){
+  const d=new Date(TODAY+'T00:00:00'); d.setDate(d.getDate()-1);
+  return String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+// YDAY를 함수로 둔다 → TODAY가 시트값으로 바뀌면 전날 생산분 판정도 자동으로 따라감.
+function YDAY(){ return yesterdayYYMMDD(); }
+function isYdayLot(lot){ return lot.slice(0,6)===YDAY(); }
+
+// ===== 그로스 추천 알고리즘 =====
+// 핵심: 5종 중 "필요수량을 채우려면 가장 임박한 날짜까지 가야 하는 상품"이 기준이 되고,
+//       나머지 상품은 그 기준 날짜에서 가까운 순으로 채운다(선입선출 묶음 유지).
+
+// (A) 한 상품을 임박순(left 작은 순)으로 target 채울 때, 마지막에 닿는 LOT의 left
+function reachLeft(code, target){
+  const pool=SAMPLE.filter(r=>r.code===code && r.stock>0).sort((a,b)=>a.left-b.left);
+  let remain=target, last=null;
+  for(const r of pool){ if(remain<=0)break; last=r; remain-=Math.min(r.stock,remain); }
+  return last? last.left : Infinity;
+}
+
+// (B) 기준 left에서 가까운 순으로 target 채우기.
+//     가까운 순 = |left-baseLeft| 작은 순, 동률이면 임박한(left 작은) 쪽 → 그다음 LOT명순
+function fillByBase(code, target, baseLeft){
+  const pool=SAMPLE.filter(r=>r.code===code && r.stock>0).sort((a,b)=>{
+    const da=Math.abs(a.left-baseLeft), db=Math.abs(b.left-baseLeft);
+    if(da!==db) return da-db;
+    if(a.left!==b.left) return a.left-b.left;
+    return a.lot<b.lot?-1:1;
+  });
+  const picks=[]; let remain=target;
+  for(const r of pool){
+    const take=Math.min(r.stock, Math.max(0,remain));
+    remain-=take;
+    picks.push({...r, take, yday:isYdayLot(r.lot)});
+  }
+  return {picks, shortage:Math.max(0,remain)};
+}
+
+// 단품: 기준이 자기 자신 → reachLeft로 자기 기준 잡고 채움 (= 임박순 선입선출)
+function recommend(code, target){
+  const base=reachLeft(code,target);
+  return fillByBase(code,target, base===Infinity? 0 : base);
+}
+
+// MIX: 5종 공통 기준 날짜를 먼저 구해서 모든 상품에 적용
+function recommendMixBase(perKind, productCodes){
+  const reaches=productCodes.map(c=>reachLeft(c,perKind)).filter(v=>v!==Infinity);
+  return reaches.length? Math.min(...reaches) : 0; // 가장 임박한 도달날짜가 전체 기준
+}
+function recommendMixKind(code, perKind, baseLeft){
+  return fillByBase(code, perKind, baseLeft);
+}
+// 전날분 포함 총 가용재고
+function availTotal(code){ return SAMPLE.filter(r=>r.code===code&&r.stock>0).reduce((s,r)=>s+r.stock,0); }
+function nearestExp(used){ if(!used.length) return null; return used.reduce((m,p)=>p.left<m.left?p:m, used[0]); }
+
+let state={mode:null,code:null,name:null,qty:600,sets:12,edits:{},mixEdits:{},loss:{}};
+
+// ---- 화면1 ----
+function renderProd(){
+  document.getElementById('prodGrid').innerHTML =
+    PRODUCTS.map(p=>`<div class="prod-btn" onclick="pickSingle('${p.code}','${p.name}')">
+      <div class="pname">${p.name}</div><div class="pcode">${p.code}</div></div>`).join('')
+    + `<div class="prod-btn mix" onclick="pickMix()">
+        <div class="pname">MIX 40개입</div><div class="pcode">5종 × 8개 · 1박스=12세트</div></div>`;
+  renderGrossHist();   // [v2] 하단 최근 출고 내역
+}
+
+// [v2] 최근 5일 '로켓그로스' 출고 내역 (날짜별 묶음·일자 합계·최신순)
+function nameOfG(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
+function fmtMDG(ymd){
+  const m=(ymd||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ymd||'';
+  const md=parseInt(m[2],10)+'/'+parseInt(m[3],10);
+  return (ymd===TODAY)? md+' (오늘)' : md;
+}
+function renderGrossHist(){
+  const el=document.getElementById('grossHist'); if(!el) return;
+  const rows=RECENTS.filter(r=>r.type==='로켓그로스' && r.qty>0);
+  let h='<div class="hist"><div class="hist-h">최근 그로스 출고 내역 (5일)</div>';
+  if(rows.length===0){ el.innerHTML=h+'<div class="hist-empty">최근 5일 그로스 출고 없음</div></div>'; return; }
+  const groups=[], idx={};
+  rows.forEach(r=>{
+    if(!(r.date in idx)){ idx[r.date]=groups.length; groups.push({date:r.date, items:[], sum:0}); }
+    const g=groups[idx[r.date]]; g.items.push(r); g.sum+=r.qty;
+  });
+  groups.forEach(g=>{
+    h+=`<div class="hist-date">${fmtMDG(g.date)}<span class="hist-sum">총 ${g.sum}개</span></div>`;
+    g.items.forEach(o=>{
+      h+=`<div class="hist-row"><span class="hist-l">${nameOfG(o.code)} · ${o.lot}${o.memo?' · '+o.memo:''}</span><span class="hist-r">${o.qty}개</span></div>`;
+    });
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+function show(id){['screen-prod','screen-qty','screen-rec'].forEach(s=>
+  document.getElementById(s).classList.toggle('hidden',s!==id)); window.scrollTo(0,0);}
+
+// ===== 시스템 뒤로가기(안드로이드 ← 버튼) 처리 =====
+// 단계(prod→qty→rec)로 들어갈 때 히스토리를 쌓고, 뒤로가기(popstate)가 오면
+// event.state의 단계로 화면을 되돌린다. back-link·"처음으로"·자동복귀도 history로 통일.
+const STEP_DEPTH={prod:0, qty:1, rec:2};
+let curStep='prod';
+function pushStep(step){ curStep=step; history.pushState({step:step}, ''); }
+function showStep(step){   // 실제 화면 전환 (히스토리는 건드리지 않음)
+  curStep=step;
+  if(step==='prod'){ state.mode=null; document.getElementById('hsub').textContent='출고할 상품을 선택하세요'; show('screen-prod'); }
+  else if(step==='qty'){ renderQty(); show('screen-qty'); }
+  else if(step==='rec'){ state.mode==='single'?renderRecSingle():renderRecMix(); show('screen-rec'); }
+}
+window.addEventListener('popstate', (e)=>{ showStep((e.state&&e.state.step)||'prod'); });
+// 처음으로/자동복귀: 현재 단계 깊이만큼 히스토리를 되감아 prod로 (popstate가 화면 전환)
+function goProd(){ const d=STEP_DEPTH[curStep]||0; if(d>0) history.go(-d); else showStep('prod'); }
+
+function pickSingle(code,name){state.mode='single';state.code=code;state.name=name;state.qty=600;state.edits={};state.loss={};
+  document.getElementById('hsub').textContent=name+' 단품 출고';renderQty();pushStep('qty');show('screen-qty');}
+function pickMix(){state.mode='mix';state.code='MIX';state.name='MIX 40개입';state.sets=12;state.mixEdits={};state.loss={};
+  document.getElementById('hsub').textContent='MIX 40개입 출고';renderQty();pushStep('qty');show('screen-qty');}
+
+// ---- 화면2: 수량 ----
+function renderQty(){
+  const lab=document.getElementById('qtyLabel'), card=document.getElementById('qtyCard');
+  if(state.mode==='single'){
+    lab.textContent='2. 출고 수량 — '+state.name;
+    card.innerHTML=`
+      <div class="qty-row">
+        <button class="qbtn" onclick="bump(-100)">−</button>
+        <div class="qfield">
+          <input class="qbig-input" id="qInput" inputmode="numeric" value="${state.qty}" oninput="onQtyInput(this)">
+          <div class="qunit">개</div>
+        </div>
+        <button class="qbtn" onclick="bump(100)">＋</button>
+      </div>
+      <div class="qty-row" style="margin-top:10px;gap:8px;">
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bump(-10)">−10</button>
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bump(10)">＋10</button>
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bump(-1)">−1</button>
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bump(1)">＋1</button>
+      </div>
+      <div class="calc-note">총 가용재고: <b id="availTxt"></b> <span id="ydHint" style="color:var(--yday);"></span></div>`;
+    document.getElementById('precheckArea').innerHTML='';
+    updateAvailSingle();
+  }else{
+    lab.textContent='2. 출고 세트 수 — MIX 40개입';
+    card.innerHTML=`
+      <div class="qty-row">
+        <button class="qbtn" onclick="bumpSet(-12)">−</button>
+        <div class="qfield">
+          <input class="qbig-input" id="setInput" inputmode="numeric" value="${state.sets}" oninput="onSetInput(this)">
+          <div class="qunit">세트</div>
+        </div>
+        <button class="qbtn" onclick="bumpSet(12)">＋</button>
+      </div>
+      <div class="qty-row" style="margin-top:10px;gap:8px;">
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bumpSet(-1)">−1</button>
+        <button class="qbtn" style="width:auto;flex:1;font-size:15px;height:44px;" onclick="bumpSet(1)">＋1</button>
+        <button class="qbtn" style="width:auto;flex:1;font-size:14px;height:44px;" onclick="setSets(12)">1박스</button>
+      </div>
+      <div class="calc-note" id="setCalc"></div>`;
+    updateMix();
+  }
+}
+function bump(d){state.qty=Math.max(0,state.qty+d);document.getElementById('qInput').value=state.qty;updateAvailSingle();}
+function onQtyInput(el){let v=parseInt(el.value.replace(/[^0-9]/g,''))||0;state.qty=v;updateAvailSingle();}
+function updateAvailSingle(){
+  const total=availTotal(state.code);
+  const ydSum=SAMPLE.filter(r=>r.code===state.code&&isYdayLot(r.lot)).reduce((s,r)=>s+r.stock,0);
+  const a=document.getElementById('availTxt'); if(a){a.textContent=total+'개';a.style.color=state.qty>total?'var(--warn)':'var(--text)';}
+  const h=document.getElementById('ydHint'); if(h) h.textContent= ydSum>0? `(이 중 전날 생산분 ${ydSum}개 — 입고 확인 필요)`:'';
+}
+function bumpSet(d){state.sets=Math.max(0,state.sets+d);document.getElementById('setInput').value=state.sets;updateMix();}
+function onSetInput(el){let v=parseInt(el.value.replace(/[^0-9]/g,''))||0;state.sets=v;updateMix();}
+function setSets(n){state.sets=n;document.getElementById('setInput').value=n;updateMix();}
+
+// MIX: 세트 입력 시 5종 출고가능 사전점검
+function updateMix(){
+  const perKind=state.sets*PER_KIND_PER_SET;
+  document.getElementById('setCalc').innerHTML=
+    `${state.sets}세트 = 종류별 <b>${perKind}개</b>씩 · 총 <b>${state.sets*40}개</b> (1박스=12세트=480개)`;
+  // 사전점검
+  const checks=PRODUCTS.map(p=>{
+    const total=availTotal(p.code);
+    return {name:p.name, need:perKind, have:total, ok:total>=perKind, short:Math.max(0,perKind-total)};
+  });
+  const allOk=checks.every(c=>c.ok);
+  const pc=document.getElementById('precheckArea');
+  pc.innerHTML=`
+    <div class="precheck">
+      <div class="pc-head ${allOk?'ok':'bad'}">${allOk?'✓ 출고 가능':'⚠ 출고 수량 부족'}</div>
+      ${checks.map(c=>`<div class="pc-row"><span class="pc-name">${c.name}</span>
+        <span class="${c.ok?'pc-ok':'pc-bad'}">${c.ok?`재고 ${c.have} ≥ 필요 ${c.need}`:`${c.short}개 부족 (재고 ${c.have})`}</span></div>`).join('')}
+    </div>`;
+  const btn=document.getElementById('toRecBtn'); if(btn) btn.disabled=(perKind===0);
+}
+
+// ---- 화면3: 추천 ----
+function goQty(){ history.back(); }   // rec→qty 한 단계 뒤로 (popstate가 화면 전환)
+function goRec(){ state.mode==='single'?renderRecSingle():renderRecMix(); pushStep('rec'); show('screen-rec'); }
+
+function lotCardHTML(p, cls){
+  const far=p.left>=85?'far':'';
+  const on=p.take>0;
+  return `<div class="lot-card ${p.yday?'yday':''} ${on?'picked':''}">
+    <div class="lot-check">✓</div>
+    <div class="lot-main">
+      <div class="lot-code">${p.lot}</div>
+      <div class="lot-meta">재고 ${p.stock}개 <span class="exp-pill ${far}">~${p.exp} (${p.left}일)</span></div>
+      ${p.yday?`<div class="yday-tag">⚠ 전날 생산분 · 입고 확인 후 입력</div>`:''}
+    </div>
+    <div class="lot-qty-box">
+      <input class="lot-qty-input ${cls} ${on?'has':''}" inputmode="numeric" data-lot="${p.lot}" data-stock="${p.stock}"
+        value="${p.take}" oninput="onLotEdit(this)">
+      <div class="lot-qty-cap">최대 ${p.stock}</div>
+      <div class="lot-loss-wrap" data-losswrap="${p.lot}" style="display:${on?'block':'none'}">
+        <div class="lot-loss-row">
+          <input class="lot-loss-input ${(state.loss[p.lot]||0)>0?'has':''}" inputmode="numeric"
+            data-lossfor="${p.lot}" value="${(state.loss[p.lot]||0)>0?state.loss[p.lot]:''}"
+            placeholder="로스0" oninput="onLossEdit(this)">
+        </div>
+        <div class="lot-loss-cap">깨짐·불량(개)</div>
+      </div>
+    </div></div>`;
+}
+
+function renderRecSingle(){
+  const {picks,shortage}=recommend(state.code,state.qty);
+  picks.forEach(p=>{if(state.edits[p.lot]!=null)p.take=state.edits[p.lot];});
+  document.getElementById('recArea').innerHTML=`
+    <div class="rec-head"><div class="rec-title">${state.name} 추천 LOT</div><div class="rec-target">목표 ${state.qty}개</div></div>
+    <div class="rec-rule">선입선출(임박 LOT부터) · 가까운 날짜끼리 묶음 · 전날 생산분(${YDAY()})은 ⚠ 표시(입고 확인 후 출고)</div>
+    ${picks.map(p=>lotCardHTML(p,'sg-inp')).join('')||'<div class="lot-card"><div class="lot-main">LOT 없음</div></div>'}
+    <div class="rec-foot"><div class="rec-sum"><span>선택 합계</span><span id="sumTxt"></span></div></div>
+    <div id="expNotice"></div>
+    ${workerBoxHTML()}
+    <button class="btn btn-primary" id="recordBtn" onclick="recordSingle()">출고 입력 완료</button>
+    <button class="btn btn-ghost" onclick="goProd()">처음으로</button>`;
+  setupWorkerBox();
+  refreshSingleSum();
+}
+function onLotEdit(inp){let v=parseInt(inp.value.replace(/[^0-9]/g,''))||0;
+  inp.classList.toggle('over',v>+inp.dataset.stock);
+  inp.classList.toggle('has',v>0);
+  inp.closest('.lot-card').classList.toggle('picked',v>0);
+  state.edits[inp.dataset.lot]=v;
+  // 로스칸 표시/숨김: 수량>0인 LOT에서만 로스 입력 가능
+  const lot=inp.dataset.lot;
+  const wrap=inp.closest('.lot-qty-box').querySelector(`[data-losswrap="${lot}"]`);
+  if(wrap){
+    wrap.style.display = v>0 ? 'block' : 'none';
+    if(v===0){ // 수량 0이면 로스도 초기화 (출고 안 하는 LOT에 로스만 남지 않게)
+      state.loss[lot]=0;
+      const li=wrap.querySelector('.lot-loss-input'); if(li){ li.value=''; li.classList.remove('has'); }
+    }
+  }
+  state.mode==='single'?refreshSingleSum():refreshMixSums();}
+function onLossEdit(inp){let v=parseInt(inp.value.replace(/[^0-9]/g,''))||0;
+  inp.classList.toggle('has',v>0);
+  state.loss[inp.dataset.lossfor]=v;}
+function refreshSingleSum(){
+  const inputs=[...document.querySelectorAll('.sg-inp')]; let sum=0,over=false; const used=[];
+  inputs.forEach(i=>{const v=parseInt(i.value)||0;sum+=v;if(v>+i.dataset.stock)over=true;
+    if(v>0){const r=SAMPLE.find(x=>x.lot===i.dataset.lot);if(r)used.push({...r,take:v});}});
+  const el=document.getElementById('sumTxt'),diff=sum-state.qty;
+  if(el)el.innerHTML=diff===0?`<span class="done">${sum} / ${state.qty}개 ✓</span>`:`<span class="miss">${sum} / ${state.qty}개 (${diff>0?'+':''}${diff})</span>`;
+  renderExpNotice(used,'expNotice');
+  const b=document.getElementById('recordBtn');if(b)b.disabled=over||sum===0||!workerOk();
+}
+
+// MIX: 5종 한 화면
+function renderRecMix(){
+  const perKind=state.sets*PER_KIND_PER_SET;
+  const codes=PRODUCTS.map(p=>p.code);
+  const baseLeft=recommendMixBase(perKind, codes);   // 5종 공통 기준 날짜
+  const baseName=(PRODUCTS.find(p=>reachLeft(p.code,perKind)===baseLeft)||{}).name||'';
+  let html=`<div class="rec-head"><div class="rec-title">MIX 40개입 추천 LOT</div>
+      <div class="rec-target">${state.sets}세트 · 종류별 ${perKind}개</div></div>
+    <div class="rec-rule">기준 <b style="color:#bcd3e8">${baseName}</b>의 유통기한에 맞춰 5종을 가까운 LOT끼리 묶음 · 전날 생산분(${YDAY()})은 ⚠ 표시</div>`;
+  PRODUCTS.forEach((p,ki)=>{
+    const {picks}=recommendMixKind(p.code,perKind,baseLeft);
+    picks.forEach(x=>{const e=getMixEdit(ki);if(e[x.lot]!=null)x.take=e[x.lot];});
+    html+=`<div class="kind-block">
+      <div class="kind-bar"><span class="kind-name">${p.name} <span style="color:var(--dim);font-size:13px;">${ki+1}/5</span></span>
+      <span class="kind-sum" id="ksum-${ki}"></span></div>
+      ${picks.map(x=>mixLotCardHTML(x,ki)).join('')||'<div class="lot-card"><div class="lot-main">LOT 없음</div></div>'}</div>`;
+  });
+  html+=`<div class="rec-foot"><div class="rec-sum"><span>전체 종류 충족</span><span id="mixAll"></span></div></div>
+    <div id="mixExp"></div>
+    ${workerBoxHTML()}
+    <button class="btn btn-primary" id="mixRecordBtn" onclick="recordMix()">출고 입력 완료</button>
+    <button class="btn btn-ghost" onclick="goProd()">처음으로</button>`;
+  document.getElementById('recArea').innerHTML=html;
+  setupWorkerBox();
+  refreshMixSums();
+}
+function mixLotCardHTML(p,ki){
+  const far=p.left>=85?'far':'';
+  const on=p.take>0;
+  return `<div class="lot-card ${p.yday?'yday':''} ${on?'picked':''}">
+    <div class="lot-check">✓</div>
+    <div class="lot-main"><div class="lot-code">${p.lot}</div>
+      <div class="lot-meta">재고 ${p.stock}개 <span class="exp-pill ${far}">~${p.exp} (${p.left}일)</span></div>
+      ${p.yday?`<div class="yday-tag">⚠ 전날 생산분 · 입고 확인 후 입력</div>`:''}</div>
+    <div class="lot-qty-box">
+      <input class="lot-qty-input mix-inp ${on?'has':''}" data-kind="${ki}" inputmode="numeric" data-lot="${p.lot}" data-stock="${p.stock}"
+        value="${p.take}" oninput="onMixEdit(this)">
+      <div class="lot-qty-cap">최대 ${p.stock}</div>
+      <div class="lot-loss-wrap" data-losswrap="${p.lot}" style="display:${on?'block':'none'}">
+        <div class="lot-loss-row">
+          <input class="lot-loss-input ${(state.loss[p.lot]||0)>0?'has':''}" inputmode="numeric"
+            data-lossfor="${p.lot}" value="${(state.loss[p.lot]||0)>0?state.loss[p.lot]:''}"
+            placeholder="로스0" oninput="onLossEdit(this)">
+        </div>
+        <div class="lot-loss-cap">깨짐·불량(개)</div>
+      </div>
+    </div></div>`;
+}
+function getMixEdit(ki){state.mixEdits[ki]=state.mixEdits[ki]||{};return state.mixEdits[ki];}
+function onMixEdit(inp){let v=parseInt(inp.value.replace(/[^0-9]/g,''))||0;
+  inp.classList.toggle('over',v>+inp.dataset.stock);
+  inp.classList.toggle('has',v>0);
+  inp.closest('.lot-card').classList.toggle('picked',v>0);
+  getMixEdit(+inp.dataset.kind)[inp.dataset.lot]=v;
+  // 로스칸 표시/숨김 (단품과 동일)
+  const lot=inp.dataset.lot;
+  const wrap=inp.closest('.lot-qty-box').querySelector(`[data-losswrap="${lot}"]`);
+  if(wrap){
+    wrap.style.display = v>0 ? 'block' : 'none';
+    if(v===0){
+      state.loss[lot]=0;
+      const li=wrap.querySelector('.lot-loss-input'); if(li){ li.value=''; li.classList.remove('has'); }
+    }
+  }
+  refreshMixSums();}
+function refreshMixSums(){
+  const perKind=state.sets*PER_KIND_PER_SET; let allOk=true; const used=[];
+  PRODUCTS.forEach((p,ki)=>{
+    const inputs=[...document.querySelectorAll(`.mix-inp[data-kind="${ki}"]`)];
+    let sum=0,over=false;
+    inputs.forEach(i=>{const v=parseInt(i.value)||0;sum+=v;if(v>+i.dataset.stock)over=true;
+      if(v>0){const r=SAMPLE.find(x=>x.lot===i.dataset.lot);if(r)used.push({...r,take:v});}});
+    const el=document.getElementById('ksum-'+ki),diff=sum-perKind;
+    if(el)el.innerHTML=diff===0?`<span class="done">${sum}/${perKind} ✓</span>`:`<span class="miss">${sum}/${perKind} (${diff>0?'+':''}${diff})</span>`;
+    if(diff!==0||over)allOk=false;
+  });
+  const m=document.getElementById('mixAll');if(m)m.innerHTML=allOk?`<span class="done">5종 모두 충족 ✓</span>`:`<span class="miss">미충족 종류 있음</span>`;
+  renderExpNotice(used,'mixExp');
+  const b=document.getElementById('mixRecordBtn');if(b)b.disabled=!allOk||!workerOk();
+}
+
+function renderExpNotice(used,elId){
+  const el=document.getElementById(elId);if(!el)return;
+  const ne=nearestExp(used);
+  if(!ne){el.innerHTML='';return;}
+  el.innerHTML=`<div class="exp-notice"><div class="en-label">📦 로켓그로스 입고생성용 유통기한</div>
+    <div class="en-date">${ne.exp}</div><div class="en-sub">선택 LOT 중 가장 임박 · 남은 ${ne.left}일 (LOT ${ne.lot})</div></div>`;
+}
+
+// ===== 실제 시트 전송 =====
+// 배포 후 받은 웹앱 URL을 여기에 붙여넣으세요. (일반 출고와 같은 URL 사용 가능)
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwK_baIu0IK4Dn4oPXyr3K5_dUPYeNC-HAABJ55mWwrdsSN0SjgG2-djwHvlaohkbV5/exec';
+let RECENTS = [];   // [v2] 시트에서 받아온 최근 5일 출고기록 (상품선택 화면 하단 그로스 이력)
+
+// ===== 작업자(출고관리자) =====
+// 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
+// (받아오면 시트 최신값으로 덮어씀 → 시트만 고치면 화면도 따라옴)
+let WORKERS = ['김현정','이성은','김경희','이정훈','문예지','한규리','최보경','배인경'];
+let currentWorker = '';   // 직전에 고른 작업자를 기억(같은 사람이 연달아 출고할 때 편함)
+
+// 페이지 열릴 때(또는 '재고 새로고침' 버튼) 시트에서 한 번에 받아온다.
+//   workers(작업자) + lots(현재 LOT 재고) + today(오늘 날짜)
+// GET 응답을 못 읽어도(기본값으로) 화면은 정상 작동.
+function loadFromSheet(opts){
+  opts = opts || {};
+  if(WEBAPP_URL.indexOf('http')!==0) return;
+  if(opts.btn){ opts.btn.disabled=true; opts.btn.textContent='불러오는 중…'; }
+  fetch(WEBAPP_URL, {method:'GET'})
+    .then(r=>r.json())
+    .then(res=>{
+      // (1) 작업자 목록
+      if(res && Array.isArray(res.workers) && res.workers.length){
+        WORKERS = res.workers;
+        const sel=document.getElementById('workerSelect');
+        if(sel) fillWorkerSelect(sel);   // 추천 화면이 떠 있으면 다시 채움
+      }
+      // (2) 오늘 날짜 — 전날 생산분 판정 기준을 시트와 통일
+      if(res && res.today) TODAY = res.today;
+      // [v2] 최근 5일 출고기록 (상품선택 화면 하단 그로스 이력)
+      if(res && Array.isArray(res.records)){
+        RECENTS = res.records;
+        if(state.mode===null) renderGrossHist();
+      }
+      // (3) LOT 재고 — 그로스는 SAMPLE 형식(lot,code,name,stock,exp,left)과 동일 → 그대로 교체
+      if(res && Array.isArray(res.lots) && res.lots.length){
+        SAMPLE = res.lots.map(l=>({
+          lot:l.lot, code:l.code, name:l.name||'',
+          stock:Number(l.stock)||0, exp:l.exp||'', left:(l.left!=null?Number(l.left):0)
+        }));
+        // 사용자가 입력 중인 화면을 갈아엎지 않도록, 상품 선택 화면일 때만 다시 그림
+        if(state.mode===null) renderProd();
+      }
+      if(opts.btn){ opts.btn.textContent='✓ 최신 재고 받음'; setTimeout(()=>resetReloadBtn(opts.btn),1500); }
+    })
+    .catch(err=>{
+      console.log('시트에서 받아오기 실패 — 기본값 사용:', err);
+      if(opts.btn){ opts.btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>resetReloadBtn(opts.btn),1800); }
+    });
+}
+// 이전 이름(loadWorkers)으로도 부를 수 있게 별칭 유지
+function loadWorkers(){ loadFromSheet(); }
+function resetReloadBtn(btn){ if(btn){ btn.disabled=false; btn.textContent='🔄 재고 새로고침'; } }
+
+// 드롭다운 채우기 (currentWorker가 있으면 미리 선택)
+function fillWorkerSelect(sel){
+  const opts = ['<option value="">— 작업자 선택 —</option>']
+    .concat(WORKERS.map(w=>`<option value="${w}" ${w===currentWorker?'selected':''}>${w}</option>`));
+  sel.innerHTML = opts.join('');
+  sel.value = currentWorker || '';
+}
+
+// 작업자 선택 영역 HTML (단품·MIX 추천 화면 공통)
+function workerBoxHTML(){
+  return `<div class="worker-box" id="workerBox">
+    <div class="worker-label">출고관리자 <span class="req">*</span> <span style="color:var(--dim);font-weight:600;">(누가 입력하나요)</span></div>
+    <select class="worker-select" id="workerSelect" onchange="onWorkerChange(this)"></select>
+    <div class="worker-hint hidden" id="workerHint">⚠ 작업자를 선택해야 출고를 기록할 수 있어요</div>
+  </div>`;
+}
+
+// 작업자 박스를 화면에 꽂고 드롭다운을 채운 뒤 버튼 상태를 맞춘다.
+function setupWorkerBox(){
+  const sel=document.getElementById('workerSelect');
+  if(sel){ fillWorkerSelect(sel); }
+  syncWorkerGate();
+}
+
+function onWorkerChange(sel){
+  currentWorker = sel.value || '';
+  sel.classList.toggle('unset', !currentWorker);
+  syncWorkerGate();
+}
+
+// 작업자 미선택이면 "출고 입력 완료" 버튼을 잠그고 안내를 띄운다.
+// (수량 쪽 조건과 합쳐서 최종 버튼 활성/비활성 결정)
+function syncWorkerGate(){
+  const sel=document.getElementById('workerSelect');
+  const hint=document.getElementById('workerHint');
+  const box=document.getElementById('workerBox');
+  const has=!!(sel && sel.value);
+  if(sel) sel.classList.toggle('unset', !has);
+  if(hint) hint.classList.toggle('hidden', has);
+  if(box) box.classList.toggle('need', !has);
+  // 수량 쪽 갱신 함수가 버튼 최종 상태를 결정하므로 그걸 다시 부른다.
+  state.mode==='single' ? refreshSingleSum() : refreshMixSums();
+}
+
+function workerOk(){ const s=document.getElementById('workerSelect'); return !!(s && s.value); }
+
+
+function collectMixLines(){
+  // MIX 5종의 LOT별 줄을 모은다. 메모에 'MIX 종류명' 표기.
+  const lines=[];
+  PRODUCTS.forEach((p,ki)=>{
+    document.querySelectorAll(`.mix-inp[data-kind="${ki}"]`).forEach(i=>{
+      const qty=parseInt(i.value)||0;
+      if(qty>0){
+        const line={lot:i.dataset.lot, qty, memo:`MIX ${p.name}`};
+        const ls=state.loss[i.dataset.lot]||0;       // 화면 양수 입력
+        if(ls>0) line.loss=-ls;                       // 시트엔 음수로 (G열)
+        lines.push(line);
+      }
+    });
+  });
+  return lines;
+}
+
+function recordSingle(){
+  const inputs=[...document.querySelectorAll('.sg-inp')];
+  const lines=inputs.map(i=>{
+      const qty=parseInt(i.value)||0;
+      const line={lot:i.dataset.lot, qty, memo:`${state.name} 그로스`};
+      const ls=state.loss[i.dataset.lot]||0;
+      if(qty>0 && ls>0) line.loss=-ls;                // 수량>0인 LOT만 로스 반영, 음수로
+      return line;
+    })
+    .filter(l=>l.qty>0);
+  sendOut(lines, document.getElementById('recordBtn'));
+}
+function recordMix(){
+  const lines=collectMixLines();
+  sendOut(lines, document.getElementById('mixRecordBtn'));
+}
+
+function sendOut(lines, btn){
+  if(!lines.length){ toast('출고할 수량이 없습니다'); return; }
+  if(!workerOk()){ toast('⚠ 작업자(출고관리자)를 먼저 선택하세요'); syncWorkerGate(); return; }
+  const manager = document.getElementById('workerSelect').value;
+  currentWorker = manager;   // 다음 출고 때 미리 선택되도록 기억
+  if(WEBAPP_URL.indexOf('http')!==0){
+    toast('⚠ 웹앱 URL을 먼저 넣어주세요'); 
+    console.log('전송 예정 데이터:', {type:'gross',otype:'로켓그로스',manager,lines}); 
+    return;
+  }
+  const orig = btn? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='기록 중…'; }
+
+  fetch(WEBAPP_URL, {
+    method:'POST',
+    body: JSON.stringify({ type:'gross', otype:'로켓그로스', manager, lines })
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    if(res && res.ok){
+      toast(`✓ ${res.count}개 LOT 기록 완료 (${res.firstRow}~${res.lastRow}행)`);
+      if(btn){ btn.textContent='✓ 기록됨'; }
+      loadFromSheet();   // [v2] 최신 재고 + 최근 출고내역 다시 받아오기
+      setTimeout(()=>goProd(), 1400);
+    }else{
+      toast('기록 실패: '+(res && res.error || '알 수 없는 오류'));
+      if(btn){ btn.disabled=false; btn.textContent=orig; }
+    }
+  })
+  .catch(err=>{
+    // no-cors 등으로 응답을 못 읽는 경우 대비: 실패로 단정하지 않고 안내
+    toast('전송됨 — 시트에서 기록 확인 필요');
+    console.log('응답 읽기 오류(기록은 됐을 수 있음):', err);
+    if(btn){ btn.disabled=false; btn.textContent=orig; }
+  });
+}
+
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+
+history.replaceState({step:'prod'}, '');   // 초기 단계 명시 (뒤로가기 정합)
+curStep='prod';
+renderProd();
+loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜 받아오기(실패해도 기본값으로 동작)
+</script>
+</body>
+</html>

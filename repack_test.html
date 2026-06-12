@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>에너지바 소분 검수</title>
+<link rel="manifest" href="repack.webmanifest">
+<meta name="theme-color" content="#11151c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="소분 IN">
+<style>
+  :root{
+    --bg:#11151c; --panel:#171c25; --card:#1c2330; --card2:#232c3b;
+    --txt:#eef2f7; --dim:#8b97a8; --line:#2b3545;
+    --accent:#4ea1ff; --accent2:#1c2f47;
+    --ok:#39c07a; --ok-bg:#163025;
+    --warn:#e0a93b; --warn-bg:#332912;
+    --urgent:#ff6a6a; --urgent-bg:#3a1a1d;
+    --short:#ff8a3d; --short-bg:#39230f;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    font-size:18px; -webkit-text-size-adjust:100%; }
+  .wrap{ max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* 헤더 */
+  header{ padding:16px 18px 12px; border-bottom:1px solid var(--line); }
+  .htitle{ font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; }
+  .badge{ background:var(--accent2); color:var(--accent); font-size:13px; font-weight:800;
+    padding:4px 12px; border-radius:8px; }
+  .hsub{ color:var(--dim); font-size:14px; margin-top:6px; font-weight:600; }
+
+  /* 단계 표시 */
+  .steps{ display:flex; gap:6px; padding:12px 18px 4px; }
+  .s{ flex:1; height:5px; border-radius:3px; background:var(--line); }
+  .s.on{ background:var(--accent); }
+
+  main{ flex:1; padding:14px 18px 120px; }
+
+  .hint{ color:var(--dim); font-size:14px; margin:2px 0 14px; line-height:1.5; }
+
+  /* 상품 선택 */
+  .prod-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .prod{ background:var(--card); border:2px solid var(--line); border-radius:16px;
+    padding:22px 14px; text-align:center; cursor:pointer; }
+  .prod:active{ transform:scale(.98); }
+  .prod .pn{ font-size:21px; font-weight:800; }
+  .prod .pc{ color:var(--dim); font-size:13px; margin-top:6px; font-weight:600; }
+  .prod .pcount{ color:var(--accent); font-size:13px; margin-top:8px; font-weight:700; }
+
+  .reload-btn{ display:block; width:100%; margin-top:16px; background:var(--card2);
+    border:1px solid var(--line); color:var(--dim); font-size:15px; font-weight:700;
+    padding:13px; border-radius:12px; cursor:pointer; }
+  .reload-btn:active{ transform:scale(.99); }
+
+  /* LOT 목록 */
+  .lot{ background:var(--card); border:2px solid var(--line); border-radius:16px;
+    padding:16px; margin-bottom:12px; cursor:pointer; }
+  .lot:active{ transform:scale(.99); }
+  .lot.done{ opacity:.5; }
+  .lot .row1{ display:flex; justify-content:space-between; align-items:baseline; }
+  .lot .lname{ font-size:22px; font-weight:800; }
+  .lot .tag{ font-size:12px; font-weight:800; padding:3px 10px; border-radius:8px; }
+  .lot .tag.first{ background:var(--accent2); color:var(--accent); }
+  .lot .tag.checked{ background:var(--ok-bg); color:var(--ok); }
+  .lot .tag.shortrec{ background:var(--short-bg); color:var(--short); }
+  .lot .row2{ display:flex; justify-content:space-between; margin-top:10px; align-items:flex-end; }
+  .lot .qcome{ font-size:15px; color:var(--dim); font-weight:600; }
+  .lot .qcome b{ color:var(--txt); font-size:19px; }
+  .lot .exp{ font-size:14px; color:var(--dim); font-weight:600; text-align:right; }
+  .lot .exp b{ color:var(--txt); }
+  .lot .exp .dleft{ display:block; margin-top:3px; }
+  .badge-d{ font-size:12px; font-weight:800; padding:2px 9px; border-radius:7px; }
+  .badge-d.urgent{ background:var(--urgent-bg); color:var(--urgent); }
+  .badge-d.warn{ background:var(--warn-bg); color:var(--warn); }
+  .badge-d.ok{ background:var(--ok-bg); color:var(--ok); }
+
+  /* 검수 입력 화면 */
+  .chk-info{ background:var(--card2); border-radius:16px; padding:18px; margin-bottom:18px;
+    border:2px solid var(--line); }
+  .chk-info .ci-lot{ font-size:24px; font-weight:800; }
+  .chk-info .ci-meta{ font-size:14px; color:var(--dim); margin-top:6px; font-weight:600; }
+  .chk-info .ci-meta b{ color:var(--txt); }
+
+  .come-box{ background:var(--accent2); border-radius:14px; padding:16px; margin-bottom:16px;
+    text-align:center; }
+  .come-box .cl{ font-size:14px; color:var(--accent); font-weight:700; }
+  .come-box .cv{ font-size:34px; font-weight:800; margin-top:4px; }
+
+  .field-label{ font-size:15px; color:var(--dim); font-weight:700; margin:0 0 8px; }
+
+  .numbox{ border:2px solid var(--line); border-radius:14px; text-align:center;
+    padding:14px; font-size:40px; font-weight:800; margin-bottom:6px; min-height:74px;
+    display:flex; align-items:center; justify-content:center; }
+  .numbox.short{ border-color:var(--short); color:var(--short); }
+  .numbox.over{ border-color:var(--urgent); color:var(--urgent); }
+
+  /* 차이 안내 */
+  .diff{ border-radius:14px; padding:14px 16px; margin-bottom:16px; font-weight:700; }
+  .diff.match{ background:var(--ok-bg); color:var(--ok); }
+  .diff.short{ background:var(--short-bg); color:var(--short); }
+  .diff.over{ background:var(--urgent-bg); color:var(--urgent); }
+  .diff .dt{ font-size:17px; }
+  .diff .dd{ font-size:13px; margin-top:4px; font-weight:600; opacity:.95; }
+
+  /* 유통기한 표시 */
+  .exp-notice{ background:var(--card2); border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+  .exp-notice .en-label{ font-size:13px; color:var(--dim); font-weight:700; }
+  .exp-notice .en-date{ font-size:22px; font-weight:800; margin-top:3px; }
+  .exp-notice .en-sub{ font-size:13px; color:var(--dim); margin-top:3px; font-weight:600; }
+
+  /* 사유 입력(부족 시) */
+  .memo-wrap{ margin-bottom:16px; }
+  .memo-wrap textarea{ width:100%; background:var(--card); border:2px solid var(--line);
+    border-radius:12px; color:var(--txt); font-size:16px; padding:12px; resize:none;
+    font-family:inherit; font-weight:600; }
+  .memo-wrap textarea:focus{ outline:none; border-color:var(--accent); }
+  .memo-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .chip{ background:var(--card2); border:1px solid var(--line); color:var(--dim);
+    font-size:13px; font-weight:700; padding:7px 12px; border-radius:9px; cursor:pointer; }
+  .chip:active{ transform:scale(.97); }
+
+  /* 작업자 선택 */
+  .worker-wrap{ margin-bottom:16px; }
+  .worker-wrap select{ width:100%; background:var(--card); border:2px solid var(--line);
+    border-radius:12px; color:var(--txt); font-size:18px; font-weight:700; padding:13px 12px;
+    font-family:inherit; -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b97a8' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right 14px center; }
+  .worker-wrap select:focus{ outline:none; border-color:var(--accent); }
+  .worker-note{ color:var(--urgent); font-size:13px; font-weight:700; margin-top:7px; }
+
+  /* 숫자판 */
+  .keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
+  .key{ background:var(--card); border:2px solid var(--line); border-radius:14px;
+    font-size:28px; font-weight:800; padding:18px 0; text-align:center; cursor:pointer; color:var(--txt); }
+  .key:active{ transform:scale(.96); background:var(--card2); }
+  .key.fn{ font-size:20px; color:var(--dim); }
+
+  /* 하단 고정 버튼 */
+  .footbar{ position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:520px; padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--bg) 70%, transparent); display:flex; gap:10px; }
+  .btn{ flex:1; border:none; border-radius:14px; font-size:19px; font-weight:800;
+    padding:17px; cursor:pointer; font-family:inherit; }
+  .btn:active{ transform:scale(.99); }
+  .btn-ghost{ background:var(--card2); color:var(--dim); flex:0 0 96px; border:1px solid var(--line); }
+  .btn-pass{ background:var(--ok); color:#06281a; }
+  .btn-rec{ background:var(--urgent); color:#3a0d0f; }
+  .btn:disabled{ opacity:.4; }
+
+  /* 토스트 */
+  .toast{ position:fixed; left:50%; top:40%; transform:translateX(-50%);
+    background:var(--card2); border:1px solid var(--line); border-radius:14px;
+    padding:18px 24px; font-size:17px; font-weight:700; z-index:50; text-align:center;
+    box-shadow:0 10px 40px rgba(0,0,0,.5); display:none; }
+  .toast.show{ display:block; }
+  .toast.ok{ border-color:var(--ok); }
+  .toast.err{ border-color:var(--urgent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="htitle">소분 검수<span class="badge">물류팀1</span></div>
+    <div class="hsub">생산에서 넘어온 LOT을 세어 확인하세요</div>
+  </header>
+
+  <div class="steps">
+    <div class="s" id="st1"></div>
+    <div class="s" id="st2"></div>
+    <div class="s" id="st3"></div>
+  </div>
+
+  <main id="main"></main>
+
+  <div class="footbar" id="footbar" style="display:none;"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   에너지바 소분 검수 화면 (물류팀1)
+   - 출고 화면과 같은 골격: 상품 5종 → LOT 목록 → 검수 입력(숫자판)
+   - 다른 점: "출고"가 아니라 "검수". 수량이 맞으면 통과(기록 안 함),
+     부족하면 출고기록 시트에 한 줄 — E(출고수량)=0, G(물류로스)=음수(부족분), F(출고유형)=기타.
+   - 시트 H열 수식이 H = E − G 이므로, 부족 3개면 G=-3 → H=3 (창고에서 더 빠진 양).
+   - .gs는 손대지 않음(loss를 그대로 G열에 기록). 화면이 음수 loss만 보내면 됨.
+   ========================================================================= */
+
+/* ★ 여기에 실제 웹앱 배포 URL을 넣으세요 (출고 화면과 같은 URL).
+   비워두면 화면은 기본(샘플) 데이터로 동작하고, 기록은 콘솔에만 남습니다. */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwK_baIu0IK4Dn4oPXyr3K5_dUPYeNC-HAABJ55mWwrdsSN0SjgG2-djwHvlaohkbV5/exec';
+
+/* 에너지바 5종 (출고 화면과 동일) */
+const PRODUCTS = [
+  { code:'EAE1CR', name:'크랜베리' },
+  { code:'EAE1CA', name:'카카오' },
+  { code:'EAE1ST', name:'스트로베리' },
+  { code:'EAE1BK', name:'블랙' },
+  { code:'EAE1NU', name:'통견과' },
+];
+
+/* 받아오기 실패 시 대비용 기본 LOT (출고 화면의 옛 샘플과 동일 구조).
+   stock = 넘어온 수량(현재재고 F), days = 남은 유통일. 실제론 loadFromSheet()가 시트값으로 교체. */
+let LOTS = [
+  {lot:'260524A',code:'EAE1NU',stock:106,exp:'2026-08-22',days:87},
+  {lot:'260526D',code:'EAE1NU',stock:240,exp:'2026-08-24',days:89},
+];
+
+/* 작업자 기본 목록 (받아오기 실패 시 대비. 실제론 시트 작업자목록 B열로 교체) */
+let WORKERS = ['김현정','이성은','김경희','이정훈','문예지','한규리','최보경','배인경'];
+
+let view='products';
+let curProduct=null;     // 선택한 상품코드
+let curLot=null;         // 검수 중인 LOT 객체
+let counted='';          // 실제 센 수량(문자열, 숫자판 입력)
+let memo='';             // 부족 사유
+let curWorker='';        // 선택된 작업자
+let lastWorker='';       // 직전 작업자 기억
+let checked={};          // 이번 세션에 검수 끝낸 LOT 표시 {lot: '통과'|'부족-N'}
+let INSPECTED={};        // [v2] 검수완료된 LOT (시트 '검수완료' + 이번 세션 처리분) → 목록에서 제외
+
+const $ = id => document.getElementById(id);
+
+/* ---------- 시트에서 작업자 + LOT 재고 받아오기 ---------- */
+function loadFromSheet(opts){
+  opts = opts || {};
+  const btn = opts.btn;
+  if(btn){ btn.dataset.orig = btn.textContent; btn.textContent='불러오는 중…'; btn.disabled=true; }
+  if(!GAS_URL){ if(btn){ btn.textContent='연결 URL 없음'; setTimeout(()=>restoreBtn(btn),1500);} return; }
+
+  fetch(GAS_URL, { method:'GET' })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && Array.isArray(res.workers) && res.workers.length){
+        WORKERS = res.workers;
+      }
+      // [v2] 검수완료 LOT 목록 — 이 LOT들은 검수 목록에서 제외한다.
+      INSPECTED = {};
+      if(res && Array.isArray(res.inspectedLots)){
+        res.inspectedLots.forEach(l=>{ INSPECTED[l]=true; });
+      }
+      if(res && Array.isArray(res.lots) && res.lots.length){
+        // 시트는 left(남은일)로 주는데 이 화면은 days를 쓰므로 left→days 매핑
+        LOTS = res.lots.map(l=>({
+          lot:   l.lot,
+          code:  l.code,
+          stock: Number(l.stock)||0,   // 넘어온 수량 = 현재재고(F)
+          exp:   l.exp || '',
+          days:  (l.left!=null ? Number(l.left) : 0),
+        }));
+      }
+      if(btn){ btn.textContent='✓ 최신 재고 받음'; setTimeout(()=>restoreBtn(btn),1500); }
+      // 목록 화면이 떠 있으면 새 데이터로 다시 그림(검수 입력 중이면 안 건드림)
+      if(view==='products' || view==='lots') render();
+    })
+    .catch(()=>{
+      if(btn){ btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>restoreBtn(btn),1800); }
+    });
+}
+function restoreBtn(btn){ btn.textContent = btn.dataset.orig || '🔄 재고 새로고침'; btn.disabled=false; }
+
+/* ---------- 공통 도우미 ---------- */
+function prodName(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
+function lotsOf(code){
+  return LOTS.filter(l=>l.code===code && !INSPECTED[l.lot])   // [v2] 검수완료는 제외
+             .sort((a,b)=>(a.days||0)-(b.days||0));   // 유통기한 임박순
+}
+function badge(days){
+  if(days<40) return ['urgent','임박 D-'+days];
+  if(days<60) return ['warn','D-'+days];
+  return ['ok','D-'+days];
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  $('st1').className='s on';
+  $('st2').className='s'+(view==='lots'||view==='check'?' on':'');
+  $('st3').className='s'+(view==='check'?' on':'');
+
+  if(view==='products') renderProducts();
+  else if(view==='lots') renderLots();
+  else if(view==='check') renderCheck();
+}
+
+function renderProducts(){
+  $('footbar').style.display='none';
+  let h='<div class="hint">검수할 상품을 고르세요. 창고 칸막이 순서대로 정리돼 있습니다.</div>';
+  h+='<div class="prod-grid">';
+  PRODUCTS.forEach(p=>{
+    const cnt=lotsOf(p.code).length;
+    h+=`<div class="prod" onclick="pickProduct('${p.code}')">
+          <div class="pn">${p.name}</div>
+          <div class="pc">${p.code}</div>
+          <div class="pcount">LOT ${cnt}개</div>
+        </div>`;
+  });
+  h+='</div>';
+  h+=`<button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>`;
+  $('main').innerHTML=h;
+}
+
+function renderLots(){
+  $('footbar').style.display='flex';
+  $('footbar').innerHTML=`<button class="btn btn-ghost" onclick="goProducts()">← 상품</button>
+    <button class="btn" style="background:var(--card2);color:var(--dim);" onclick="goProducts()">${prodName(curProduct)} 검수 끝</button>`;
+
+  const list=lotsOf(curProduct);
+  let h=`<div class="hint">${prodName(curProduct)} · 유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 확인하세요.</div>`;
+  if(!list.length){ h+='<div class="hint">표시할 LOT이 없습니다. 새로고침해 보세요.</div>'; $('main').innerHTML=h; return; }
+
+  list.forEach((l,i)=>{
+    const [bc,bt]=badge(l.days||0);
+    const done=checked[l.lot];
+    let tag='';
+    if(done==='통과') tag=`<span class="tag checked">✓ 통과</span>`;
+    else if(done && done.startsWith('부족')) tag=`<span class="tag shortrec">${done} 기록</span>`;
+    else if(i===0) tag=`<span class="tag first">먼저 확인</span>`;
+    h+=`<div class="lot ${done?'done':''}" onclick="pickLot('${l.lot}')">
+          <div class="row1"><div class="lname">${l.lot}</div>${tag}</div>
+          <div class="row2">
+            <div class="qcome">넘어온 수량 <b>${l.stock}</b></div>
+            <div class="exp">유통기한 <b>${l.exp||'-'}</b>
+              <span class="dleft"><span class="badge-d ${bc}">${bt}</span></span></div>
+          </div>
+        </div>`;
+  });
+  $('main').innerHTML=h;
+}
+
+function renderCheck(){
+  const l=curLot;
+  const come=l.stock;                          // 넘어온 수량
+  const c = counted==='' ? null : parseInt(counted);
+  const diff = (c===null) ? null : (c - come); // 실제 - 넘어온
+  const isShort = diff!==null && diff<0;
+  const isOver  = diff!==null && diff>0;
+  const isMatch = diff!==null && diff===0;
+
+  $('footbar').style.display='flex';
+
+  let h='';
+  // 검수 대상 정보
+  h+=`<div class="chk-info">
+        <div class="ci-lot">${l.lot}</div>
+        <div class="ci-meta">${prodName(l.code)} · 유통기한 <b>${l.exp||'-'}</b></div>
+      </div>`;
+
+  // 넘어온 수량 강조
+  h+=`<div class="come-box">
+        <div class="cl">생산에서 넘어온 수량</div>
+        <div class="cv">${come}개</div>
+      </div>`;
+
+  // 실제 센 수량 입력칸
+  let nbCls='numbox'; if(isShort) nbCls+=' short'; if(isOver) nbCls+=' over';
+  h+=`<div class="field-label">실제 센 수량</div>
+      <div class="${nbCls}">${counted===''?'0':counted}</div>`;
+
+  // 숫자판
+  h+='<div class="keypad">';
+  ['1','2','3','4','5','6','7','8','9'].forEach(k=>h+=`<div class="key" onclick="tapKey('${k}')">${k}</div>`);
+  h+=`<div class="key fn" onclick="tapKey('C')">지움</div>`;
+  h+=`<div class="key" onclick="tapKey('0')">0</div>`;
+  h+=`<div class="key fn" onclick="tapKey('B')">←</div>`;
+  h+='</div>';
+
+  // 차이 안내 (키패드 아래 — 키 위치가 입력값에 따라 밀리지 않도록)
+  if(isMatch){
+    h+=`<div class="diff match"><div class="dt">✓ 수량 일치 — 이상 없음</div>
+          <div class="dd">아래 "검수 통과"를 누르면 끝납니다. (기록 안 남김)</div></div>`;
+  } else if(isShort){
+    h+=`<div class="diff short"><div class="dt">${-diff}개 부족 (로스 ${diff})</div>
+          <div class="dd">사유를 적고 "로스 기록"을 누르세요. 출고기록에 ${diff} 한 줄이 남습니다.</div></div>`;
+  } else if(isOver){
+    h+=`<div class="diff over"><div class="dt">넘어온 수량보다 ${diff}개 많음</div>
+          <div class="dd">지금은 초과는 기록하지 않습니다. 수량을 다시 확인하거나, 맞으면 통과하세요.</div></div>`;
+  }
+
+  // 사유 입력(부족일 때만 노출)
+  if(isShort){
+    h+=`<div class="memo-wrap">
+          <div class="field-label">부족 사유</div>
+          <textarea id="memoInput" rows="2" placeholder="예: 운송 중 파손 / 소분 중 불량" oninput="onMemo(this.value)">${memo}</textarea>
+          <div class="memo-chips">
+            <span class="chip" onclick="setMemo('운송 중 파손')">운송 중 파손</span>
+            <span class="chip" onclick="setMemo('소분 중 불량')">소분 중 불량</span>
+            <span class="chip" onclick="setMemo('수량 부족')">수량 부족</span>
+          </div>
+        </div>`;
+  }
+
+  // 작업자 선택
+  let opts='<option value="">— 작업자 선택 —</option>';
+  WORKERS.forEach(w=>{ opts+=`<option value="${w}" ${w===curWorker?'selected':''}>${w}</option>`; });
+  h+=`<div class="worker-wrap">
+        <div class="field-label">검수 작업자</div>
+        <select onchange="onWorker(this.value)">${opts}</select>
+        ${curWorker?'':'<div class="worker-note">⚠ 작업자를 선택해야 기록·통과할 수 있습니다.</div>'}
+      </div>`;
+
+  $('main').innerHTML=h;
+
+  // 하단 버튼 — 상태에 따라 통과 / 로스 기록
+  const noWorker = !curWorker;
+  if(isShort){
+    const needMemo = memo.trim()==='';
+    $('footbar').innerHTML=`<button class="btn btn-ghost" onclick="goLots()">← LOT</button>
+      <button class="btn btn-rec" ${(noWorker||needMemo||c===null)?'disabled':''} onclick="recordShort()">로스 기록</button>`;
+  } else {
+    // 일치 / 초과 / 미입력 → 통과 버튼 (단, 초과·미입력 시 안내만)
+    $('footbar').innerHTML=`<button class="btn btn-ghost" onclick="goLots()">← LOT</button>
+      <button class="btn btn-pass" ${(noWorker||c===null||isOver)?'disabled':''} onclick="passCheck()">검수 통과</button>`;
+  }
+}
+
+/* ---------- 동작 ---------- */
+function pickProduct(code){ curProduct=code; view='lots'; pushStep(); render(); }
+function goProducts(){ history.back(); }
+function goLots(){ history.back(); }
+
+function pickLot(lot){
+  const l=LOTS.find(x=>x.lot===lot);
+  if(!l) return;
+  curLot=l; counted=''; memo='';
+  curWorker = lastWorker;        // 직전 작업자 미리 선택
+  view='check'; pushStep(); render();
+}
+
+function tapKey(k){
+  if(k==='C') counted='';
+  else if(k==='B') counted=counted.slice(0,-1);
+  else { if(counted.length<5) counted=(counted==='0'?'':counted)+k; }
+  render();
+}
+function onMemo(v){ memo=v; }                       // 타이핑은 재렌더 안 함(커서 보존)
+function setMemo(v){ memo=v; render(); }            // 칩 클릭은 재렌더
+function onWorker(v){ curWorker=v; if(v) lastWorker=v; render(); }
+
+/* 검수 통과 — 출고기록엔 안 쓰고, '검수완료' 시트에만 남긴다(→ 목록에서 영구 제외) */
+function passCheck(){
+  if(!curWorker){ toast('작업자를 선택하세요','err'); return; }
+  const lot=curLot.lot, worker=curWorker;
+
+  if(!GAS_URL){
+    INSPECTED[lot]=true; checked[lot]='통과';
+    toast('(연결 전) '+lot+' 통과','ok');
+    setTimeout(()=>goLots(), 700);
+    return;
+  }
+
+  toast('통과 처리 중…','');
+  fetch(GAS_URL, { method:'POST', body:JSON.stringify({
+    type:'sobun_pass', manager:worker, lines:[{ lot:lot, memo:'' }]
+  })})
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.ok){
+        INSPECTED[lot]=true; checked[lot]='통과';   // 이 LOT은 이제 목록에서 사라짐
+        toast('✓ '+lot+' 통과','ok');
+        setTimeout(()=>goLots(), 700);
+      } else {
+        toast('⚠ 통과 기록 실패: '+((res&&res.error)||'알 수 없음'),'err');
+      }
+    })
+    .catch(()=>{ toast('⚠ 전송 오류 · 다시 시도','err'); });
+}
+
+/* 부족 → 출고기록에 음수 로스 한 줄 */
+function recordShort(){
+  const come=curLot.stock;
+  const c=parseInt(counted);
+  const diff=c-come;                    // 음수
+  if(!(diff<0)){ toast('부족일 때만 기록합니다','err'); return; }
+  if(!curWorker){ toast('작업자를 선택하세요','err'); return; }
+  if(memo.trim()===''){ toast('사유를 입력하세요','err'); return; }
+
+  const payload = {
+    type:'sobun',
+    otype:'기타',                        // F열
+    manager:curWorker,                   // I열
+    lines:[{ lot:curLot.lot, qty:0, loss:diff, memo:memo.trim() }]  // E=0, G=음수
+  };
+
+  if(!GAS_URL){
+    console.log('전송 예정(미연결):', payload);
+    checked[curLot.lot]='부족'+diff; INSPECTED[curLot.lot]=true;
+    toast('(연결 전) '+curLot.lot+' '+diff+' 기록 예정','ok');
+    setTimeout(()=>goLots(), 900);
+    return;
+  }
+
+  toast('기록 중…','');
+  fetch(GAS_URL, { method:'POST', body:JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(res=>{
+      if(res && res.ok){
+        checked[curLot.lot]='부족'+diff; INSPECTED[curLot.lot]=true;   // 검수 목록에서 제외
+        // 시트가 부족분만큼 재고를 더 빼므로, 화면 재고도 맞춰 줄임
+        curLot.stock = come + diff;      // come + (음수) = 줄어듦
+        toast('✓ '+curLot.lot+' 로스 '+diff+' 기록됨','ok');
+        setTimeout(()=>goLots(), 900);
+      } else {
+        toast('⚠ 기록 실패: '+((res&&res.error)||'알 수 없음'),'err');
+      }
+    })
+    .catch(()=>{ toast('⚠ 전송 오류 · 다시 시도','err'); });
+}
+
+/* ---------- 토스트 ---------- */
+let toastTimer=null;
+function toast(msg,kind){
+  const t=$('toast');
+  t.textContent=msg; t.className='toast show'+(kind?(' '+kind):'');
+  if(toastTimer) clearTimeout(toastTimer);
+  if(kind!=='') toastTimer=setTimeout(()=>{ t.className='toast'; }, 2200);
+}
+
+/* ---------- 시스템 뒤로가기(안드로이드 ← 버튼) 처리 ----------
+   단계 진입 시 히스토리를 한 칸 쌓고, 뒤로가기(popstate)가 오면 한 단계만 내려간다.
+   화면 안 "← 상품/← LOT" 버튼·검수 후 자동 복귀(goLots)도 history.back()으로 통일. */
+function pushStep(){ history.pushState({view:view}, ''); }
+function stepBack(){
+  if(view==='check'){ curLot=null; counted=''; memo=''; view='lots'; }
+  else if(view==='lots'){ curProduct=null; view='products'; }
+  render();
+}
+window.addEventListener('popstate', ()=>{ stepBack(); });
+
+/* ---------- 시작 ---------- */
+loadFromSheet();
+render();
+</script>
+</body>
+</html>
