@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>한결맛담 송장 변환기 v0.4</title>
+<title>한결맛담 송장 변환기 v0.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -20,8 +20,8 @@
   button.small { padding: 4px 10px; font-size: 12px; }
   button:disabled { background: #b8c2cc; cursor: default; }
   #mapStatus { font-size: 12px; margin-top: 8px; color: #333; white-space: pre-wrap; }
-  #drop { border: 2px dashed #9db3d8; border-radius: 10px; padding: 34px 16px; text-align: center; color: #567; background: #fbfcfe; cursor: pointer; font-size: 14px; }
-  #drop.over { background: #e8f0fe; border-color: #2f6fed; }
+  #drop, #drop2 { border: 2px dashed #9db3d8; border-radius: 10px; padding: 34px 16px; text-align: center; color: #567; background: #fbfcfe; cursor: pointer; font-size: 14px; }
+  #drop.over, #drop2.over { background: #e8f0fe; border-color: #2f6fed; }
   .filecard { border: 1px solid #dfe5eb; border-radius: 8px; padding: 10px 12px; margin-top: 10px; background: #fdfdfe; }
   .filehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .fname { font-weight: bold; font-size: 13px; }
@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.4 (7/8 — 카페24 검증 완료 · SSG 주소 날짜 오변환 수정)</span></h1>
+  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.6 (7/8 — 역등록: 스스·선물하기·쿠팡 채움 + 카페24 배송중처리 자동 생성)</span></h1>
   <div class="sub">채널 주문 파일 → 이름 변환(마스터 상품명 형식) + 공란 처리 → e-포스트용 .xlsx — 설계도 v2 §3</div>
 
   <div class="card">
@@ -65,6 +65,16 @@
   </div>
 
   <div class="card">
+    <h2>3) 역등록 — e-포스트 반환 파일로 송장번호 되채우기</h2>
+    <div id="drop2">반환 파일(운송장출력조회 엑셀)을 여기로 끌어다 놓기<br>
+      <span style="font-size:12px;color:#999">2)에 그날 채널 주문 파일들을 넣어둔 상태에서 — 주문번호로 짝 맞춰 채널별 송장 파일을 만들어줌</span></div>
+    <input type="file" id="fileInput2" accept=".xlsx,.xls" style="display:none">
+    <div class="stats" id="regStatus">아직 반환 파일 없음</div>
+    <div style="margin-top:8px"><button id="btnReg" disabled>채널 파일에 송장 채우기 · 다운로드</button></div>
+    <div id="regResult"></div>
+  </div>
+
+  <div class="card">
     <details class="help">
       <summary><b>사용법 · 채널별 규칙 (펼치기)</b></summary>
       <ul>
@@ -74,6 +84,7 @@
         <li><b>선물하기:</b> G(상품명) ← F(채널상품번호)+H(옵션) 매핑 · H 공란 · F 숫자화 — 톡스토어는 "미매핑"으로 뜸 → 현행대로 수기. ★ 주문 파일을 넣어야 함 (코드표 파일 아님)</li>
         <li><b>전 채널 검증 완료(7/8):</b> 카페24는 6개월 실주문 932행 대조로 검증(비쿠팡 121/125 변환·오변환 0). <b>카페24 파일의 쿠팡행 미매핑은 정상</b> — 쿠팡은 WING 파일로 처리하므로 무시(평소대로)</li>
         <li><b>주소 오변환 수정(7/8):</b> SSG·카페24 파일을 원문 그대로 읽음 — "방답길 36-9" 같은 주소가 날짜로 바뀌던 버그 해결</li>
+        <li><b>역등록(3번):</b> 채널 파일들을 2)에 넣은 채로 반환 파일을 3)에 넣고 버튼 — 스스(J송장·I택배사)·선물하기(L송장·K006)·쿠팡(E송장·D우체국) 자동 채움, 카페24는 L송장 채움 + <b>배송중처리.csv 자동 생성(그대로 사이트 등록)</b>, 우체국쇼핑·SSG는 대조표. 주문번호는 e-포스트 접수 양식에 매핑된 접수분부터 돌아옴(7/8 수정)</li>
         <li><b>미매핑 행:</b> 원본 그대로 두고 목록으로 표시 → 마스터 탭에 기입 보완 후 다시 변환하면 됨(재변환 안전)</li>
         <li>채널 식별이 틀리면 파일 카드의 선택 상자에서 직접 고르면 됨. [헤더 보기]는 식별 실패 시 캡처 협업용.</li>
       </ul>
@@ -101,6 +112,31 @@ var CHANNELS = {
   'SSG':       { tested: true,  sig: ['옵션번호'],                nameCol: 'AD', blankCols: ['AF'],         keyCols: ['AB','AE'] }
 };
 var DETECT_ORDER = ['쿠팡', '카페24', '스스', '우체국쇼핑', '선물하기', 'SSG'];
+
+/* ── 역등록(v2 1단계): 채널별 주문번호 열 + 채울 칸 (실물 파일 박제 — 7/8)
+     '@' = 송장번호(등기번호). 우체국쇼핑·SSG는 어드민 파일 등록 방법 확인 전까지 대조표만. ── */
+var REG = {
+  '스스':      { orderCol: 'M', fills: [['J','@'],['I','우체국택배']] },
+  '선물하기':   { orderCol: 'D', fills: [['L','@'],['K','006']] },
+  '쿠팡':      { orderCol: 'C', fills: [['E','@'],['D','우체국']] },
+  '카페24':    { orderCol: 'J', fills: [['L','@']] },
+  '우체국쇼핑': { orderCol: 'A', fills: [] },
+  'SSG':       { orderCol: 'I', fills: [] }
+};
+var regMap = null;       // 주문번호 → { track, name, ch }
+var regTableHtml = '';
+var loadedFiles = [];    // 2)에 넣은 채널 파일들
+function uniq(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
+function downloadCsv(rows, filename) {  // UTF-8 BOM — 카페24 배송중처리 형식(실물 1배송중처리.csv와 동일)
+  var csv = '\ufeff' + rows.map(function (r) {
+    return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',');
+  }).join('\r\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 var maps = null;      // 채널명 → { key: 기입상품명 }
 var fileSeq = 0;
@@ -204,6 +240,101 @@ function convert(aoa, channel, headerIdx) {
   return { out: out, converted: converted, unmapped: unmapped, preview: preview };
 }
 
+/* ── 역등록: 반환 파일 입력 ── */
+var drop2 = $('drop2');
+drop2.onclick = function () { $('fileInput2').click(); };
+$('fileInput2').onchange = function (e) { handleReturn(e.target.files); e.target.value = ''; };
+drop2.ondragover = function (e) { e.preventDefault(); drop2.classList.add('over'); };
+drop2.ondragleave = function () { drop2.classList.remove('over'); };
+drop2.ondrop = function (e) { e.preventDefault(); drop2.classList.remove('over'); handleReturn(e.dataTransfer.files); };
+
+function handleReturn(list) {
+  var f = list[0]; if (!f) return;
+  var reader = new FileReader();
+  reader.onload = function (ev) {
+    var wb;
+    try { wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' }); }
+    catch (err) { $('regStatus').textContent = '❌ 반환 파일을 읽지 못함: ' + err; return; }
+    var aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' });
+    // 헤더 행을 이름으로 탐색 (열 배치가 시기마다 달라도 동작)
+    var hRow = -1, cols = {};
+    for (var r = 0; r < Math.min(10, aoa.length); r++) {
+      var names = (aoa[r] || []).map(norm);
+      if (names.indexOf('등기번호') >= 0) {
+        hRow = r;
+        names.forEach(function (h, i) { if (h && cols[h] === undefined) cols[h] = i; });
+        break;
+      }
+    }
+    if (hRow < 0) { $('regStatus').textContent = '❌ "등기번호" 헤더를 못 찾음 — 운송장출력조회 파일이 맞는지 확인'; return; }
+    if (cols['주문번호'] === undefined) { $('regStatus').textContent = '❌ 이 반환 파일엔 "주문번호" 열이 없음(구양식) — 양식 수정 후 접수분부터 가능'; return; }
+    regMap = {}; var total = 0, withOrder = 0;
+    for (var i = hRow + 1; i < aoa.length; i++) {
+      var row = aoa[i] || [];
+      var track = norm(row[cols['등기번호']]);
+      if (!track) continue;
+      total++;
+      var ord = normPart(row[cols['주문번호']]);
+      if (!ord) continue;
+      withOrder++;
+      if (!regMap[ord]) regMap[ord] = { track: track, name: norm(row[cols['수취인명']]), ch: norm(row[cols['주문접수처명']]) };
+      else if (regMap[ord].track.indexOf(track) < 0) regMap[ord].track += '/' + track;  // 한 주문 복수 박스
+    }
+    $('regStatus').textContent = '✅ ' + f.name + ' — 송장 ' + total + '건, 주문번호 실린 건 ' + withOrder + '건' +
+      (withOrder < total ? ' (나머지는 양식 수정 전 접수분 → 수기)' : '');
+    $('btnReg').disabled = false;
+    var keys = Object.keys(regMap);
+    var t = '<table class="hdr"><tr><th>채널</th><th>주문번호</th><th>수취인</th><th>등기번호(송장)</th></tr>';
+    keys.forEach(function (k) {
+      var v = regMap[k];
+      t += '<tr><td>' + v.ch + '</td><td>' + k + '</td><td>' + v.name + '</td><td>' + v.track + '</td></tr>';
+    });
+    regTableHtml = '<div class="stats">대조표 (우체국쇼핑·SSG 등 수기 채널용):</div>' + t + '</table>';
+    $('regResult').innerHTML = regTableHtml;
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+$('btnReg').onclick = function () {
+  if (!regMap) return;
+  if (!loadedFiles.length) { $('regResult').innerHTML = '<div class="stats">⚠️ 2)에 채널 파일을 먼저 넣어줘.</div>' + regTableHtml; return; }
+  var lines = [];
+  loadedFiles.forEach(function (lf) {
+    var sel = $(lf.id + '_ch');
+    var ch = sel ? sel.value : '';
+    if (!ch || !REG[ch]) { lines.push('· ' + lf.name + ' — 채널 미선택, 건너뜀'); return; }
+    var cfg = REG[ch];
+    var det = detect(lf.aoa);
+    var hIdx = det && det.channel === ch ? det.headerIdx : 0;
+    var out = lf.aoa.slice(hIdx).map(function (row) { return (row || []).slice(); });
+    var joined = 0, missed = [], ship = [];
+    for (var i = 1; i < out.length; i++) {
+      var row = out[i]; if (!row) continue;
+      var ord = normPart(row[COL(cfg.orderCol)]);
+      if (!ord) continue;
+      var hit = regMap[ord];
+      if (!hit) { missed.push(ord); continue; }
+      cfg.fills.forEach(function (fl) { row[COL(fl[0])] = fl[1] === '@' ? hit.track : fl[1]; });
+      if (ch === '카페24') ship.push([norm(row[COL('J')]), norm(row[COL('K')]), hit.track, '']);
+      joined++;
+    }
+    if (ch === '카페24' && ship.length) {
+      downloadCsv([['주문번호', '품목별 주문번호', '운송장번호', '수량']].concat(ship),
+        lf.name.replace(/\.[^.]+$/, '') + '_배송중처리.csv');
+    }
+    if (cfg.fills.length && joined) {
+      var ws2 = XLSX.utils.aoa_to_sheet(out);
+      var wb2 = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb2, ws2, 'Sheet1');
+      XLSX.writeFile(wb2, lf.name.replace(/\.[^.]+$/, '') + '_송장.xlsx');
+    }
+    lines.push('· ' + ch + ' (' + lf.name + ') — 짝 맞음 ' + joined + '행' +
+      (cfg.fills.length ? (joined ? (ch === '카페24' ? ' → 송장 파일 + 배송중처리.csv 다운로드(그대로 사이트 등록)' : ' → 송장 파일 다운로드') : '') : ' — 위 대조표로 수기 입력') +
+      (missed.length ? ' / 반환에 없는 주문 ' + uniq(missed).length + '건(미발송·다른 날짜분)' : ''));
+  });
+  $('regResult').innerHTML = '<div class="stats">' + lines.join('<br>') + '</div>' + regTableHtml;
+};
+
 /* ── UI 카드 ── */
 function addErrorCard(name, msg) {
   var el = document.createElement('div');
@@ -234,6 +365,7 @@ function addFileCard(name, aoa) {
     '<div id="' + id + '_result"></div><div id="' + id + '_hdrbox"></div>';
   el.querySelector('.fname').textContent = name;
   $('files').appendChild(el);
+  loadedFiles.push({ id: id, name: name, aoa: aoa });
 
   $(id + '_hdr').onclick = function () {
     var box = $(id + '_hdrbox');
