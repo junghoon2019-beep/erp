@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>한결맛담 송장 변환기 v0.2</title>
+<title>한결맛담 송장 변환기 v0.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.2 (골격 — 날짜 보존·코드표 오인 방지)</span></h1>
+  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.3 (7/8 — 우체국쇼핑·SSG 검증 완료)</span></h1>
   <div class="sub">채널 주문 파일 → 이름 변환(마스터 상품명 형식) + 공란 처리 → e-포스트용 .xlsx — 설계도 v2 §3</div>
 
   <div class="card">
@@ -72,7 +72,7 @@
         <li><b>스스:</b> 첫 행(안내문) 자동 삭제 · D(상품명) ← T(옵션관리코드) 매핑 · E(옵션정보) 공란</li>
         <li><b>쿠팡(판배):</b> K(등록상품명) ← O(옵션ID) 매핑 · L·M·P 공란</li>
         <li><b>선물하기:</b> G(상품명) ← F(채널상품번호)+H(옵션) 매핑 · H 공란 · F 숫자화 — 톡스토어는 "미매핑"으로 뜸 → 현행대로 수기. ★ 주문 파일을 넣어야 함 (코드표 파일 아님)</li>
-        <li><b>카페24·우체국쇼핑·SSG:</b> 준비돼 있으나 <span class="badge beta">미검증</span> — 3채널 연습 통과 후 활성 검증</li>
+        <li><b>우체국쇼핑·SSG:</b> 검증 완료(7/8). <b>카페24:</b> 로직 검증 완료 — 단 마켓통합 파일(쿠팡·11번가·G마켓 등 혼재)이라 매핑 탭 보완 전까지 미매핑이 많이 뜸. 쿠팡행은 WING 파일로 처리하므로 이 파일에서는 무시(평소대로)</li>
         <li><b>미매핑 행:</b> 원본 그대로 두고 목록으로 표시 → 마스터 탭에 기입 보완 후 다시 변환하면 됨(재변환 안전)</li>
         <li>채널 식별이 틀리면 파일 카드의 선택 상자에서 직접 고르면 됨. [헤더 보기]는 식별 실패 시 캡처 협업용.</li>
       </ul>
@@ -95,8 +95,8 @@ var CHANNELS = {
   '쿠팡':      { tested: true,  sig: ['옵션ID', '등록상품명'],     nameCol: 'K',  blankCols: ['L','M','P'],  keyCols: ['O'] },
   '선물하기':   { tested: true,  sig: ['채널상품번호'],  at: ['F','채널상품번호'], nameCol: 'G',  blankCols: ['H'], keyCols: ['F','H'], numberCols: ['F'] },
   '카페24':    { tested: false, sig: ['상품옵션', '주문경로'],     nameCol: 'E',  blankCols: ['F'],          keyCols: ['O','F'] },
-  '우체국쇼핑': { tested: false, sig: ['상품기호'],                nameCol: 'F',  blankCols: ['H'],          keyCols: ['E','H'] },
-  'SSG':       { tested: false, sig: ['옵션번호'],                nameCol: 'AD', blankCols: ['AF'],         keyCols: ['AB','AE'] }
+  '우체국쇼핑': { tested: true,  sig: ['상품기호'],                nameCol: 'F',  blankCols: ['H'],          keyCols: ['E','H'] },
+  'SSG':       { tested: true,  sig: ['옵션번호'],                nameCol: 'AD', blankCols: ['AF'],         keyCols: ['AB','AE'] }
 };
 var DETECT_ORDER = ['쿠팡', '카페24', '스스', '우체국쇼핑', '선물하기', 'SSG'];
 
