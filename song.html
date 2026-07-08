@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한결맛담 송장 변환기 v0.2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 8px 0 2px; }
+  .sub { color: #777; font-size: 12px; margin-bottom: 14px; }
+  .card { background: #fff; border: 1px solid #e0e4e8; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; }
+  label { font-size: 12px; color: #555; display: block; margin: 6px 0 2px; }
+  input[type=text], input[type=password] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+  button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2f6fed; color: #fff; font-size: 13px; cursor: pointer; }
+  button.gray { background: #8a94a0; }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  button:disabled { background: #b8c2cc; cursor: default; }
+  #mapStatus { font-size: 12px; margin-top: 8px; color: #333; white-space: pre-wrap; }
+  #drop { border: 2px dashed #9db3d8; border-radius: 10px; padding: 34px 16px; text-align: center; color: #567; background: #fbfcfe; cursor: pointer; font-size: 14px; }
+  #drop.over { background: #e8f0fe; border-color: #2f6fed; }
+  .filecard { border: 1px solid #dfe5eb; border-radius: 8px; padding: 10px 12px; margin-top: 10px; background: #fdfdfe; }
+  .filehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .fname { font-weight: bold; font-size: 13px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e6efe6; color: #22662a; }
+  .badge.warn { background: #fdeaea; color: #a33; }
+  .badge.beta { background: #fff3d6; color: #8a6100; }
+  select { padding: 5px 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; }
+  .stats { font-size: 12px; color: #444; margin: 8px 0 4px; }
+  .unmapped { font-size: 12px; background: #fff7f7; border: 1px solid #f2d5d5; border-radius: 6px; padding: 8px; margin-top: 6px; max-height: 180px; overflow: auto; }
+  .unmapped div { padding: 1px 0; }
+  .preview { font-size: 12px; color: #356; margin-top: 6px; }
+  table.hdr { border-collapse: collapse; font-size: 11px; margin-top: 6px; display: block; overflow-x: auto; max-width: 100%; }
+  table.hdr td, table.hdr th { border: 1px solid #ddd; padding: 2px 6px; white-space: nowrap; }
+  details.help { font-size: 12px; color: #555; }
+  details.help li { margin: 3px 0; }
+  .flex { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+  .flex > div { flex: 1; min-width: 180px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.2 (골격 — 날짜 보존·코드표 오인 방지)</span></h1>
+  <div class="sub">채널 주문 파일 → 이름 변환(마스터 상품명 형식) + 공란 처리 → e-포스트용 .xlsx — 설계도 v2 §3</div>
+
+  <div class="card">
+    <h2>1) 마스터 매핑 불러오기 (하루 1번이면 충분)</h2>
+    <div class="flex">
+      <div><label>API URL (Apps Script 웹 앱 배포 URL)</label><input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/....../exec"></div>
+      <div style="max-width:220px"><label>토큰</label><input type="password" id="apiToken" placeholder="hkmd-song-..."></div>
+      <div style="flex:0"><button id="btnLoad">매핑 불러오기</button></div>
+    </div>
+    <div id="mapStatus">아직 안 불러옴 — URL·토큰 입력 후 [매핑 불러오기]</div>
+  </div>
+
+  <div class="card">
+    <h2>2) 채널 주문 파일 넣기 (여러 개 한꺼번에 가능)</h2>
+    <div id="drop">파일을 여기로 끌어다 놓거나 클릭해서 선택 (xlsx · xls · csv · html)<br>
+      <span style="font-size:12px;color:#999">암호 걸린 파일은 엑셀에서 암호 해제 후 저장해서 넣기</span></div>
+    <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv,.html,.htm" style="display:none">
+    <div id="files"></div>
+  </div>
+
+  <div class="card">
+    <details class="help">
+      <summary><b>사용법 · 채널별 규칙 (펼치기)</b></summary>
+      <ul>
+        <li><b>흐름:</b> 매핑 불러오기 → 파일 끌어넣기 → 채널 자동 식별 확인 → [변환 · 다운로드] → 받은 파일을 기존 e-포스트 양식으로 업로드 (업로드 절차 무변경)</li>
+        <li><b>스스:</b> 첫 행(안내문) 자동 삭제 · D(상품명) ← T(옵션관리코드) 매핑 · E(옵션정보) 공란</li>
+        <li><b>쿠팡(판배):</b> K(등록상품명) ← O(옵션ID) 매핑 · L·M·P 공란</li>
+        <li><b>선물하기:</b> G(상품명) ← F(채널상품번호)+H(옵션) 매핑 · H 공란 · F 숫자화 — 톡스토어는 "미매핑"으로 뜸 → 현행대로 수기. ★ 주문 파일을 넣어야 함 (코드표 파일 아님)</li>
+        <li><b>카페24·우체국쇼핑·SSG:</b> 준비돼 있으나 <span class="badge beta">미검증</span> — 3채널 연습 통과 후 활성 검증</li>
+        <li><b>미매핑 행:</b> 원본 그대로 두고 목록으로 표시 → 마스터 탭에 기입 보완 후 다시 변환하면 됨(재변환 안전)</li>
+        <li>채널 식별이 틀리면 파일 카드의 선택 상자에서 직접 고르면 됨. [헤더 보기]는 식별 실패 시 캡처 협업용.</li>
+      </ul>
+    </details>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── 열 문자 → 인덱스 ── */
+function COL(s) { var n = 0; for (var i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64); return n - 1; }
+function norm(v) { return String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim(); }
+function normKey(k) { return k.split('||').map(norm).join('||'); }
+
+/* ── 채널 정의 (설계도 v2 §2 + #88 박제: 기입값 = 마스터 상품명 형식)
+     sig: 헤더 시그니처 / at: [열, 헤더명] 위치 검증(선물하기 코드표 오인 방지) ── */
+var CHANNELS = {
+  '스스':      { tested: true,  sig: ['옵션관리코드'],            nameCol: 'D',  blankCols: ['E'],          keyCols: ['T'] },
+  '쿠팡':      { tested: true,  sig: ['옵션ID', '등록상품명'],     nameCol: 'K',  blankCols: ['L','M','P'],  keyCols: ['O'] },
+  '선물하기':   { tested: true,  sig: ['채널상품번호'],  at: ['F','채널상품번호'], nameCol: 'G',  blankCols: ['H'], keyCols: ['F','H'], numberCols: ['F'] },
+  '카페24':    { tested: false, sig: ['상품옵션', '주문경로'],     nameCol: 'E',  blankCols: ['F'],          keyCols: ['O','F'] },
+  '우체국쇼핑': { tested: false, sig: ['상품기호'],                nameCol: 'F',  blankCols: ['H'],          keyCols: ['E','H'] },
+  'SSG':       { tested: false, sig: ['옵션번호'],                nameCol: 'AD', blankCols: ['AF'],         keyCols: ['AB','AE'] }
+};
+var DETECT_ORDER = ['쿠팡', '카페24', '스스', '우체국쇼핑', '선물하기', 'SSG'];
+
+var maps = null;      // 채널명 → { key: 기입상품명 }
+var fileSeq = 0;
+
+/* ── 매핑 불러오기 ── */
+var $ = function (id) { return document.getElementById(id); };
+$('apiUrl').value = localStorage.getItem('hk_api_url') || '';
+$('apiToken').value = localStorage.getItem('hk_api_token') || '';
+
+$('btnLoad').onclick = function () {
+  var url = $('apiUrl').value.trim(), token = $('apiToken').value.trim();
+  if (!url || !token) { $('mapStatus').textContent = 'URL과 토큰을 둘 다 입력해줘.'; return; }
+  $('mapStatus').textContent = '불러오는 중…';
+  fetch(url + (url.indexOf('?') < 0 ? '?' : '&') + 'token=' + encodeURIComponent(token))
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j.error) { $('mapStatus').textContent = '❌ ' + j.error; return; }
+      maps = {};
+      var lines = [];
+      Object.keys(j.maps).forEach(function (ch) {
+        var m = {};
+        Object.keys(j.maps[ch]).forEach(function (k) { m[normKey(k)] = j.maps[ch][k]; });
+        maps[ch] = m;
+        lines.push(ch + ' ' + Object.keys(m).length + '키');
+      });
+      localStorage.setItem('hk_api_url', url);
+      localStorage.setItem('hk_api_token', token);
+      $('mapStatus').textContent = '✅ 매핑 로드 완료 (' + (j.generatedAt || '') + ')\n' + lines.join(' · ');
+    })
+    .catch(function (e) { $('mapStatus').textContent = '❌ 불러오기 실패: ' + e + '\n(배포 액세스가 "모든 사용자"인지 확인)'; });
+};
+
+/* ── 파일 입력 ── */
+var drop = $('drop');
+drop.onclick = function () { $('fileInput').click(); };
+$('fileInput').onchange = function (e) { handleFiles(e.target.files); e.target.value = ''; };
+drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = function () { drop.classList.remove('over'); };
+drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); handleFiles(e.dataTransfer.files); };
+
+function handleFiles(list) {
+  Array.prototype.forEach.call(list, function (f) {
+    var reader = new FileReader();
+    var isText = /\.(csv|html?|txt)$/i.test(f.name);
+    reader.onload = function (ev) {
+      var wb;
+      try {
+        wb = isText ? XLSX.read(ev.target.result, { type: 'string', cellDates: true })
+                    : XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
+      } catch (err) {
+        addErrorCard(f.name, '파일을 읽지 못함: ' + err + ' (암호 걸린 파일이면 엑셀에서 해제 후 저장)');
+        return;
+      }
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+      addFileCard(f.name, aoa);
+    };
+    if (isText) reader.readAsText(f); else reader.readAsArrayBuffer(f);
+  });
+}
+
+/* ── 채널 자동 식별: 위 6행에서 시그니처 헤더 탐색 + 위치 검증 ── */
+function detect(aoa) {
+  for (var d = 0; d < DETECT_ORDER.length; d++) {
+    var ch = DETECT_ORDER[d], cfg = CHANNELS[ch];
+    for (var r = 0; r < Math.min(6, aoa.length); r++) {
+      var rowText = (aoa[r] || []).map(norm).join('|');
+      var hit = cfg.sig.every(function (s) { return rowText.indexOf(s) >= 0; });
+      if (hit && cfg.at && norm((aoa[r] || [])[COL(cfg.at[0])]) !== cfg.at[1]) hit = false; // 위치 검증(코드표 오인 방지)
+      if (hit) return { channel: ch, headerIdx: r };
+    }
+  }
+  return null;
+}
+
+/* ── 변환 (핵심 로직) ── */
+function convert(aoa, channel, headerIdx) {
+  var cfg = CHANNELS[channel];
+  var map = (maps && maps[channel]) || {};
+  var out = aoa.slice(headerIdx);            // 헤더 위 행(스스 안내문 등) 제거
+  var converted = 0, unmapped = [], preview = [];
+  for (var i = 1; i < out.length; i++) {
+    var row = out[i]; if (!row) continue;
+    var parts = cfg.keyCols.map(function (c) { return norm(row[COL(c)]); });
+    if (parts.every(function (p) { return !p; })) continue;   // 빈 행
+    var key = parts.join('||');
+    var name = map[key];
+    if (name === undefined) {
+      unmapped.push({ line: headerIdx + i + 1, key: key, cur: norm(row[COL(cfg.nameCol)]) });
+      continue;                               // 미매핑: 행 원본 그대로 유지
+    }
+    row[COL(cfg.nameCol)] = name;
+    cfg.blankCols.forEach(function (c) { row[COL(c)] = ''; });
+    (cfg.numberCols || []).forEach(function (c) {
+      var v = row[COL(c)];
+      if (v !== '' && !isNaN(Number(v))) row[COL(c)] = Number(v);
+    });
+    converted++;
+    if (preview.length < 5) preview.push(name);
+  }
+  return { out: out, converted: converted, unmapped: unmapped, preview: preview };
+}
+
+/* ── UI 카드 ── */
+function addErrorCard(name, msg) {
+  var el = document.createElement('div');
+  el.className = 'filecard';
+  el.innerHTML = '<div class="filehead"><span class="fname"></span><span class="badge warn">오류</span></div><div class="stats"></div>';
+  el.querySelector('.fname').textContent = name;
+  el.querySelector('.stats').textContent = msg;
+  $('files').appendChild(el);
+}
+
+function addFileCard(name, aoa) {
+  var id = 'f' + (++fileSeq);
+  var det = detect(aoa);
+  var el = document.createElement('div');
+  el.className = 'filecard';
+  var opts = Object.keys(CHANNELS).map(function (ch) {
+    var sel = det && det.channel === ch ? ' selected' : '';
+    return '<option value="' + ch + '"' + sel + '>' + ch + (CHANNELS[ch].tested ? '' : ' (미검증)') + '</option>';
+  }).join('');
+  el.innerHTML =
+    '<div class="filehead"><span class="fname"></span>' +
+    (det ? '<span class="badge">자동 식별: ' + det.channel + '</span>'
+         : '<span class="badge warn">식별 실패 — 직접 선택</span>') +
+    '<select id="' + id + '_ch"><option value="">채널 선택…</option>' + opts + '</select>' +
+    '<button class="small" id="' + id + '_go">변환 · 다운로드</button>' +
+    '<button class="small gray" id="' + id + '_hdr">헤더 보기</button></div>' +
+    '<div class="stats" id="' + id + '_stats">전체 ' + Math.max(aoa.length - ((det ? det.headerIdx : 0) + 1), 0) + '행 (헤더 제외 추정)</div>' +
+    '<div id="' + id + '_result"></div><div id="' + id + '_hdrbox"></div>';
+  el.querySelector('.fname').textContent = name;
+  $('files').appendChild(el);
+
+  $(id + '_hdr').onclick = function () {
+    var box = $(id + '_hdrbox');
+    if (box.innerHTML) { box.innerHTML = ''; return; }
+    var html = '<table class="hdr">';
+    for (var r = 0; r < Math.min(3, aoa.length); r++) {
+      html += '<tr><th>' + (r + 1) + '행</th>';
+      for (var c = 0; c < Math.min(45, (aoa[r] || []).length); c++) {
+        html += '<td><b>' + XLSX.utils.encode_col(c) + '</b> ' + norm(aoa[r][c]).slice(0, 20) + '</td>';
+      }
+      html += '</tr>';
+    }
+    box.innerHTML = html + '</table>';
+  };
+
+  $(id + '_go').onclick = function () {
+    var ch = $(id + '_ch').value;
+    var resBox = $(id + '_result');
+    if (!ch) { resBox.innerHTML = '<div class="stats">채널을 먼저 선택해줘.</div>'; return; }
+    if (!maps) { resBox.innerHTML = '<div class="stats">먼저 위에서 [매핑 불러오기]를 해줘.</div>'; return; }
+    var hIdx = 0;
+    var det2 = detect(aoa);
+    if (det2 && det2.channel === ch) hIdx = det2.headerIdx;
+    var r = convert(aoa.map(function (row) { return row.slice(); }), ch, hIdx);
+    var html = '<div class="stats">✅ 변환 ' + r.converted + '건 / ⚠️ 미매핑 ' + r.unmapped.length + '건' +
+               (CHANNELS[ch].tested ? '' : ' <span class="badge beta">미검증 채널 — 결과 꼭 대조</span>') + '</div>';
+    if (r.preview.length) html += '<div class="preview">기입 예: ' + r.preview.join(' · ') + '</div>';
+    if (r.unmapped.length) {
+      html += '<div class="unmapped"><b>미매핑 (원본 유지 — 마스터 탭 기입 후 재변환):</b>' +
+        r.unmapped.slice(0, 50).map(function (u) {
+          return '<div>' + u.line + '행 · 키 [' + u.key + '] · 현재값 "' + u.cur.slice(0, 40) + '"</div>';
+        }).join('') +
+        (r.unmapped.length > 50 ? '<div>… 외 ' + (r.unmapped.length - 50) + '건</div>' : '') + '</div>';
+    }
+    resBox.innerHTML = html;
+    var ws2 = XLSX.utils.aoa_to_sheet(r.out, { cellDates: true });
+    var wb2 = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb2, ws2, 'Sheet1');
+    XLSX.writeFile(wb2, name.replace(/\.[^.]+$/, '') + '_변환.xlsx');
+  };
+}
+</script>
+</body>
+</html>
