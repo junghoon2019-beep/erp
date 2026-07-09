@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>한결맛담 송장 변환기 v0.6</title>
+<title>한결맛담 송장 변환기 v0.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.6 (7/8 — 역등록: 스스·선물하기·쿠팡 채움 + 카페24 배송중처리 자동 생성)</span></h1>
+  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.7 (7/9 — 스스 시트명 발송처리 + SSG 운송장일괄등록 파일)</span></h1>
   <div class="sub">채널 주문 파일 → 이름 변환(마스터 상품명 형식) + 공란 처리 → e-포스트용 .xlsx — 설계도 v2 §3</div>
 
   <div class="card">
@@ -307,7 +307,7 @@ $('btnReg').onclick = function () {
     var det = detect(lf.aoa);
     var hIdx = det && det.channel === ch ? det.headerIdx : 0;
     var out = lf.aoa.slice(hIdx).map(function (row) { return (row || []).slice(); });
-    var joined = 0, missed = [], ship = [];
+    var joined = 0, missed = [], ship = [], ssg = [];
     for (var i = 1; i < out.length; i++) {
       var row = out[i]; if (!row) continue;
       var ord = normPart(row[COL(cfg.orderCol)]);
@@ -316,20 +316,35 @@ $('btnReg').onclick = function () {
       if (!hit) { missed.push(ord); continue; }
       cfg.fills.forEach(function (fl) { row[COL(fl[0])] = fl[1] === '@' ? hit.track : fl[1]; });
       if (ch === '카페24') ship.push([norm(row[COL('J')]), norm(row[COL('K')]), hit.track, '']);
+      if (ch === 'SSG') ssg.push([norm(row[COL('G')]), hit.track]);
       joined++;
     }
     if (ch === '카페24' && ship.length) {
       downloadCsv([['주문번호', '품목별 주문번호', '운송장번호', '수량']].concat(ship),
         lf.name.replace(/\.[^.]+$/, '') + '_배송중처리.csv');
     }
+    if (ch === 'SSG' && ssg.length) {
+      // SSG 운송장정보 일괄등록 양식(SSG_WblNoUploadSample): no/배송번호/배송유형상세/택배사/송장번호/중량정보
+      // 배송유형상세 22=업체택배배송, 택배사 0000033052=우체국택배. 중량정보는 해외배송 전용 — 국내는 공란.
+      var seenS = {}, rowsS = [['no', '배송번호', '배송유형상세', '택배사', '송장번호', '중량정보']];
+      ssg.forEach(function (r) {
+        var k = r[0] + '|' + r[1]; if (!r[0] || seenS[k]) return; seenS[k] = 1;
+        rowsS.push([String(rowsS.length), r[0], '22', '0000033052', r[1], '']);
+      });
+      var wsS = XLSX.utils.aoa_to_sheet(rowsS);
+      var wbS = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wbS, wsS, '운송장일괄등록샘플');
+      XLSX.writeFile(wbS, lf.name.replace(/\.[^.]+$/, '') + '_SSG운송장일괄등록.xlsx');
+    }
     if (cfg.fills.length && joined) {
       var ws2 = XLSX.utils.aoa_to_sheet(out);
       var wb2 = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb2, ws2, 'Sheet1');
+      // 스스 일괄발송 업로드는 시트명이 '발송처리'여야 접수됨 (#94)
+      XLSX.utils.book_append_sheet(wb2, ws2, ch === '스스' ? '발송처리' : 'Sheet1');
       XLSX.writeFile(wb2, lf.name.replace(/\.[^.]+$/, '') + '_송장.xlsx');
     }
     lines.push('· ' + ch + ' (' + lf.name + ') — 짝 맞음 ' + joined + '행' +
-      (cfg.fills.length ? (joined ? (ch === '카페24' ? ' → 송장 파일 + 배송중처리.csv 다운로드(그대로 사이트 등록)' : ' → 송장 파일 다운로드') : '') : ' — 위 대조표로 수기 입력') +
+      (cfg.fills.length ? (joined ? (ch === '카페24' ? ' → 송장 파일 + 배송중처리.csv 다운로드(그대로 사이트 등록)' : ' → 송장 파일 다운로드') : '') : (ch === 'SSG' && joined ? ' → SSG 운송장일괄등록 파일 다운로드(업체 출고 관리 > 운송장정보일괄등록에 업로드) · 대조표 병행' : ' — 위 대조표로 수기 입력')) +
       (missed.length ? ' / 반환에 없는 주문 ' + uniq(missed).length + '건(미발송·다른 날짜분)' : ''));
   });
   $('regResult').innerHTML = '<div class="stats">' + lines.join('<br>') + '</div>' + regTableHtml;
