@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>한결맛담 송장 변환기 v0.7</title>
+<title>한결맛담 송장 변환기 v0.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.7 (7/9 — 스스 시트명 발송처리 + SSG 운송장일괄등록 파일)</span></h1>
+  <h1>송장 변환기 <span style="font-size:12px;color:#999">v0.8 (7/21 — 우체국쇼핑 송장 일괄업로드 파일 자동 생성)</span></h1>
   <div class="sub">채널 주문 파일 → 이름 변환(마스터 상품명 형식) + 공란 처리 → e-포스트용 .xlsx — 설계도 v2 §3</div>
 
   <div class="card">
@@ -84,7 +84,7 @@
         <li><b>선물하기:</b> G(상품명) ← F(채널상품번호)+H(옵션) 매핑 · H 공란 · F 숫자화 — 톡스토어는 "미매핑"으로 뜸 → 현행대로 수기. ★ 주문 파일을 넣어야 함 (코드표 파일 아님)</li>
         <li><b>전 채널 검증 완료(7/8):</b> 카페24는 6개월 실주문 932행 대조로 검증(비쿠팡 121/125 변환·오변환 0). <b>카페24 파일의 쿠팡행 미매핑은 정상</b> — 쿠팡은 WING 파일로 처리하므로 무시(평소대로)</li>
         <li><b>주소 오변환 수정(7/8):</b> SSG·카페24 파일을 원문 그대로 읽음 — "방답길 36-9" 같은 주소가 날짜로 바뀌던 버그 해결</li>
-        <li><b>역등록(3번):</b> 채널 파일들을 2)에 넣은 채로 반환 파일을 3)에 넣고 버튼 — 스스(J송장·I택배사)·선물하기(L송장·K006)·쿠팡(E송장·D우체국) 자동 채움, 카페24는 L송장 채움 + <b>배송중처리.csv 자동 생성(그대로 사이트 등록)</b>, 우체국쇼핑은 대조표, SSG는 <b>운송장일괄등록 .xlsx 자동 생성</b>(업체 출고 관리 &gt; 운송장정보일괄등록에 업로드). 주문번호는 e-포스트 접수 양식에 매핑된 접수분부터 돌아옴(7/8 수정)</li>
+        <li><b>역등록(3번):</b> 채널 파일들을 2)에 넣은 채로 반환 파일을 3)에 넣고 버튼 — 스스(J송장·I택배사)·선물하기(L송장·K006)·쿠팡(E송장·D우체국) 자동 채움, 카페24는 L송장 채움 + <b>배송중처리.csv 자동 생성(그대로 사이트 등록)</b>, 우체국쇼핑은 <b>송장업로드.xls 자동 생성</b>(직접배송 &gt; 엑셀업로드 · 택배사=우체국소포 선택 후), SSG는 <b>운송장일괄등록 .xlsx 자동 생성</b>(업체 출고 관리 &gt; 운송장정보일괄등록에 업로드). 주문번호는 e-포스트 접수 양식에 매핑된 접수분부터 돌아옴(7/8 수정)</li>
         <li><b>미매핑 행:</b> 원본 그대로 두고 목록으로 표시 → 마스터 탭에 기입 보완 후 다시 변환하면 됨(재변환 안전)</li>
         <li>채널 식별이 틀리면 파일 카드의 선택 상자에서 직접 고르면 됨. [헤더 보기]는 식별 실패 시 캡처 협업용.</li>
       </ul>
@@ -114,13 +114,17 @@ var CHANNELS = {
 var DETECT_ORDER = ['쿠팡', '카페24', '스스', '우체국쇼핑', '선물하기', 'SSG'];
 
 /* ── 역등록(v2 1단계): 채널별 주문번호 열 + 채울 칸 (실물 파일 박제 — 7/8)
-     '@' = 송장번호(등기번호). 우체국쇼핑·SSG는 어드민 파일 등록 방법 확인 전까지 대조표만. ── */
+     '@' = 송장번호(등기번호).
+     · 카페24 = L송장 채움 + 배송중처리.csv
+     · SSG = 운송장일괄등록.xlsx 자동 생성
+     · 우체국쇼핑 = 송장업로드.xls 자동 생성(3칸: 주문번호 A · 주문상세번호 B · 송장번호) — 7/21 확정.
+       주문상세번호(B)는 e-포스트 반환에 A가 안 실릴 때의 예비 조인키로도 사용(detailCol). ── */
 var REG = {
   '스스':      { orderCol: 'M', fills: [['J','@'],['I','우체국택배']] },
   '선물하기':   { orderCol: 'D', fills: [['L','@'],['K','006']] },
   '쿠팡':      { orderCol: 'C', fills: [['E','@'],['D','우체국']] },
   '카페24':    { orderCol: 'J', fills: [['L','@']] },
-  '우체국쇼핑': { orderCol: 'A', fills: [] },
+  '우체국쇼핑': { orderCol: 'A', detailCol: 'B', fills: [] },
   'SSG':       { orderCol: 'I', fills: [] }
 };
 var regMap = null;       // 주문번호 → { track, name, ch }
@@ -128,7 +132,7 @@ var regTableHtml = '';
 var loadedFiles = [];    // 2)에 넣은 채널 파일들
 function uniq(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
 function downloadCsv(rows, filename) {  // UTF-8 BOM — 카페24 배송중처리 형식(실물 1배송중처리.csv와 동일)
-  var csv = '\ufeff' + rows.map(function (r) {
+  var csv = '﻿' + rows.map(function (r) {
     return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',');
   }).join('\r\n');
   var a = document.createElement('a');
@@ -289,7 +293,7 @@ function handleReturn(list) {
       var v = regMap[k];
       t += '<tr><td>' + v.ch + '</td><td>' + k + '</td><td>' + v.name + '</td><td>' + v.track + '</td></tr>';
     });
-    regTableHtml = '<div class="stats">대조표 (우체국쇼핑·SSG 등 수기 채널용):</div>' + t + '</table>';
+    regTableHtml = '<div class="stats">대조표 (수기 확인용):</div>' + t + '</table>';
     $('regResult').innerHTML = regTableHtml;
   };
   reader.readAsArrayBuffer(f);
@@ -307,16 +311,21 @@ $('btnReg').onclick = function () {
     var det = detect(lf.aoa);
     var hIdx = det && det.channel === ch ? det.headerIdx : 0;
     var out = lf.aoa.slice(hIdx).map(function (row) { return (row || []).slice(); });
-    var joined = 0, missed = [], ship = [], ssg = [];
+    var joined = 0, missed = [], ship = [], ssg = [], epostShop = [];
     for (var i = 1; i < out.length; i++) {
       var row = out[i]; if (!row) continue;
       var ord = normPart(row[COL(cfg.orderCol)]);
       if (!ord) continue;
       var hit = regMap[ord];
+      if (!hit && cfg.detailCol) {           // 우체국쇼핑: 주문번호(A) 불발 시 주문상세번호(B)로도 매칭
+        var dtl0 = normPart(row[COL(cfg.detailCol)]);
+        if (dtl0) hit = regMap[dtl0];
+      }
       if (!hit) { missed.push(ord); continue; }
       cfg.fills.forEach(function (fl) { row[COL(fl[0])] = fl[1] === '@' ? hit.track : fl[1]; });
       if (ch === '카페24') ship.push([norm(row[COL('J')]), norm(row[COL('K')]), hit.track, '']);
       if (ch === 'SSG') ssg.push([norm(row[COL('G')]), hit.track]);
+      if (ch === '우체국쇼핑') epostShop.push([norm(row[COL('A')]), norm(row[COL('B')]), hit.track]);
       joined++;
     }
     if (ch === '카페24' && ship.length) {
@@ -336,6 +345,22 @@ $('btnReg').onclick = function () {
       XLSX.utils.book_append_sheet(wbS, wsS, '운송장일괄등록샘플');
       XLSX.writeFile(wbS, lf.name.replace(/\.[^.]+$/, '') + '_SSG운송장일괄등록.xlsx');
     }
+    if (ch === '우체국쇼핑' && epostShop.length) {
+      // 우체국쇼핑 송장 일괄업로드 양식(directShippingList, 7/21 확정): 주문번호 / 주문상세번호 / 송장번호
+      //  · 화면 상단 택배사 드롭다운(우체국소포)으로 택배사 지정 → 파일엔 택배사 칸 없음.
+      //  · 주문번호(A)·주문상세번호(B)는 19~25자리 → 반드시 문자열로 기입(숫자 변환 시 정밀도 손실).
+      //  · 주문상세번호 기준 중복 제거(한 주문상세=한 송장).
+      var seenU = {}, rowsU = [['주문번호', '주문상세번호', '송장번호']];
+      epostShop.forEach(function (r) {
+        var k = r[1] || r[0]; if (!k || seenU[k]) return; seenU[k] = 1;
+        rowsU.push([String(r[0]), String(r[1]), String(r[2])]);
+      });
+      var wsU = XLSX.utils.aoa_to_sheet(rowsU);
+      Object.keys(wsU).forEach(function (a) { if (a[0] !== '!') { wsU[a].t = 's'; wsU[a].v = String(wsU[a].v); } }); // 전 칸 텍스트 고정
+      var wbU = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wbU, wsU, 'Sheet0');
+      XLSX.writeFile(wbU, lf.name.replace(/\.[^.]+$/, '') + '_우체국쇼핑송장업로드.xls', { bookType: 'biff8' });
+    }
     if (cfg.fills.length && joined) {
       var ws2 = XLSX.utils.aoa_to_sheet(out);
       var wb2 = XLSX.utils.book_new();
@@ -343,8 +368,17 @@ $('btnReg').onclick = function () {
       XLSX.utils.book_append_sheet(wb2, ws2, ch === '스스' ? '발송처리' : 'Sheet1');
       XLSX.writeFile(wb2, lf.name.replace(/\.[^.]+$/, '') + '_송장.xlsx');
     }
-    lines.push('· ' + ch + ' (' + lf.name + ') — 짝 맞음 ' + joined + '행' +
-      (cfg.fills.length ? (joined ? (ch === '카페24' ? ' → 송장 파일 + 배송중처리.csv 다운로드(그대로 사이트 등록)' : ' → 송장 파일 다운로드') : '') : (ch === 'SSG' && joined ? ' → SSG 운송장일괄등록 파일 다운로드(업체 출고 관리 > 운송장정보일괄등록에 업로드) · 대조표 병행' : ' — 위 대조표로 수기 입력')) +
+    var tail;
+    if (cfg.fills.length) {
+      tail = joined ? (ch === '카페24' ? ' → 송장 파일 + 배송중처리.csv 다운로드(그대로 사이트 등록)' : ' → 송장 파일 다운로드') : '';
+    } else if (ch === 'SSG' && joined) {
+      tail = ' → SSG 운송장일괄등록 파일 다운로드(업체 출고 관리 > 운송장정보일괄등록에 업로드) · 대조표 병행';
+    } else if (ch === '우체국쇼핑' && joined) {
+      tail = ' → 우체국쇼핑송장업로드.xls 다운로드(직접배송 화면 > 엑셀업로드, 택배사=우체국소포 선택 후) · 대조표 병행';
+    } else {
+      tail = ' — 위 대조표로 수기 입력';
+    }
+    lines.push('· ' + ch + ' (' + lf.name + ') — 짝 맞음 ' + joined + '행' + tail +
       (missed.length ? ' / 반환에 없는 주문 ' + uniq(missed).length + '건(미발송·다른 날짜분)' : ''));
   });
   $('regResult').innerHTML = '<div class="stats">' + lines.join('<br>') + '</div>' + regTableHtml;
