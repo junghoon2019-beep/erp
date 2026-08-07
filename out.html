@@ -6,7 +6,10 @@
 <title>에너지바 출고 입력</title>
 <!-- v3 (2026-08-06): QUICK 출고 추가 — 주문 여러 건을 묶어 5종 필요수량 자동 합산 → 순서대로 출고.
      분해표 원본 = 시트 숨은 탭 '구성표(수정❌)' (스크립트 v3의 calc로 내려받음).
-     기존 일반 출고 흐름은 변경 없음(추가만). -->
+     기존 일반 출고 흐름은 변경 없음(추가만).
+     v3.1 (2026-08-07): QUICK 2단계 — [오늘 발송분 불러오기] 버튼 추가.
+     서버 송장자동화 로그(오늘 live·성공 건)를 스크립트 v4가 집계해 내려주면(todayOrders)
+     수량 입력이 자동으로 채워진다. 매핑 안 된 상품은 경고로 표시. -->
 <link rel="manifest" href="out.webmanifest">
 <meta name="theme-color" content="#0f1b14">
 <meta name="mobile-web-app-capable" content="yes">
@@ -234,6 +237,11 @@
   .quick-banner .qb-main{ font-size:18px; font-weight:800; margin-top:3px; }
   .quick-banner.done{ border-color:var(--safe); background:var(--safe-bg); }
   .quick-banner.done .qb-step{ color:var(--safe); }
+  /* [v3.1] 오늘 발송분 불러오기 버튼 */
+  .today-btn{ width:100%; background:var(--safe-bg); color:#bfe6ff; border:2px solid #2f5a6e;
+    border-radius:14px; padding:15px 16px; margin:0 0 12px; font-size:16.5px; font-weight:800;
+    cursor:pointer; transition:transform .08s; }
+  .today-btn:active{ transform:scale(0.98); }
 </style>
 </head>
 <body>
@@ -313,6 +321,7 @@ let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 
 let CALC={items:[]};
 let quickInputs={};
 let quick=null;
+let TODAY_ORDERS=null;   // [v3.1] 스크립트 v4가 내려주는 오늘 발송분 집계
 
 // ===== 작업자(출고관리자) =====
 // 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
@@ -346,6 +355,12 @@ function loadFromSheet(opts){
         const wasEmpty = !CALC.items.length;
         CALC = res.calc;
         if(wasEmpty && view==='quick') render();
+      }
+      // [v3.1] 오늘 발송분 집계 (스크립트 v4 이상만 내려줌 — 없어도 무시)
+      if(res && res.todayOrders){
+        const wasNull = !TODAY_ORDERS;
+        TODAY_ORDERS = res.todayOrders;
+        if(wasNull && view==='quick') render();
       }
       // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
       if(res && Array.isArray(res.lots) && res.lots.length){
@@ -485,6 +500,17 @@ function renderQuick(){
     screen.innerHTML=h; footer.innerHTML=''; return;
   }
   h+='<div class="hint">송장 보면서 <b style="color:var(--accent)">주문 들어온 상품만</b> 수량을 넣으세요. 안 온 상품은 비워두면 됩니다.</div>';
+  // [v3.1] 오늘 발송분 자동 불러오기
+  if(TODAY_ORDERS && TODAY_ORDERS.orders && Object.keys(TODAY_ORDERS.orders).length){
+    h+=`<button class="today-btn" onclick="loadTodayOrders()">📥 오늘 발송분 자동으로 채우기 (주문 ${TODAY_ORDERS.rows||0}건)</button>`;
+  }
+  if(TODAY_ORDERS && Array.isArray(TODAY_ORDERS.unmapped) && TODAY_ORDERS.unmapped.length){
+    h+=`<div class="short-note">⚠ 매핑 안 된 상품 — 아래는 수량에 <b>반영 안 됨</b>:<br>· ${TODAY_ORDERS.unmapped.join('<br>· ')}<br><b>마스터 시트의 QUICK_매핑 탭에 한 줄 추가하면 다음부터 자동 반영됩니다.</b></div>`;
+  }
+  const todayShipped = RECENTS.filter(r=>r.type==='일반주문' && r.qty>0 && r.date===SHEET_TODAY).reduce((s2,r)=>s2+r.qty,0);
+  if(todayShipped>0){
+    h+=`<div class="hint" style="margin-top:0;">ℹ 오늘 이미 일반출고 <b>${todayShipped}개</b> 기록이 있어요 — 중복 출고 주의 (첫 화면 하단 내역 참고)</div>`;
+  }
   CALC.items.forEach((it,i)=>{
     const v=quickInputs[it.name]||'';
     h+=`<div class="qrow ${(parseInt(v)||0)>0?'has':''}" id="qrow${i}">
@@ -494,6 +520,24 @@ function renderQuick(){
   });
   screen.innerHTML=h;
   footer.innerHTML=`<button class="btn" onclick="goQsum()">필요수량 계산 →</button>`;
+}
+// [v3.1] 오늘 발송분 집계를 수량 입력에 채워넣기 (기존 입력은 지우고 새로 채움)
+function loadTodayOrders(){
+  if(!TODAY_ORDERS || !TODAY_ORDERS.orders) return;
+  quickInputs={};
+  let matched=0;
+  const missing=[];
+  Object.keys(TODAY_ORDERS.orders).forEach(name=>{
+    const q=TODAY_ORDERS.orders[name];
+    if(q>0 && CALC.items.some(it=>it.name===name)){ quickInputs[name]=String(q); matched++; }
+    else if(q>0) missing.push(name);
+  });
+  missing.forEach(n=>{
+    const tag=n+' (구성표에 없는 이름)';
+    if(TODAY_ORDERS.unmapped.indexOf(tag)===-1) TODAY_ORDERS.unmapped.push(tag);
+  });
+  render();
+  showToast(matched ? `📥 ${matched}종 자동으로 채웠어요<br>수량 확인 후 계산하세요` : '⚠ 채울 에너지바 주문이 없어요');
 }
 function onQuickInput(i,el){
   const v=el.value.replace(/[^0-9]/g,'');
