@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>에너지바 출고 입력</title>
+<!-- v3 (2026-08-06): QUICK 출고 추가 — 주문 여러 건을 묶어 5종 필요수량 자동 합산 → 순서대로 출고.
+     분해표 원본 = 시트 숨은 탭 '구성표(수정❌)' (스크립트 v3의 calc로 내려받음).
+     기존 일반 출고 흐름은 변경 없음(추가만). -->
 <link rel="manifest" href="out.webmanifest">
 <meta name="theme-color" content="#0f1b14">
 <meta name="mobile-web-app-capable" content="yes">
@@ -195,6 +198,42 @@
   .loss-input:focus{ outline:none; border-color:var(--warn); }
   .loss-input.has{ border-color:var(--warn); color:var(--warn); }
   .loss-unit{ flex:none; white-space:nowrap; font-size:16px; font-weight:700; color:var(--dim); }
+  /* ===== [v3] QUICK 출고 ===== */
+  .quick-btn{ width:100%; background:linear-gradient(135deg,#12432a,#1f7d48); color:#eafff2;
+    border:2px solid var(--accent-d); border-radius:18px; padding:18px 20px; margin:0 0 16px;
+    font-size:19px; font-weight:800; cursor:pointer; text-align:left;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    transition:transform .08s; }
+  .quick-btn:active{ transform:scale(0.98); }
+  .quick-btn .qb-sub{ font-size:12.5px; color:#bfe8cf; font-weight:600; margin-top:4px; }
+  .quick-btn .qb-arrow{ font-size:28px; flex:none; }
+  .qrow{ background:var(--card2); border:2px solid var(--line); border-radius:14px;
+    padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; gap:10px; }
+  .qrow .qname{ flex:1; min-width:0; font-size:15.5px; font-weight:700; line-height:1.35; }
+  .qrow input{ flex:none; width:86px; height:52px; border-radius:12px; background:var(--card);
+    border:2px solid var(--line); color:var(--txt); font-size:22px; font-weight:800; text-align:center; }
+  .qrow input:focus{ outline:none; border-color:var(--accent); }
+  .qrow.has{ border-color:var(--accent-d); }
+  .qrow.has input{ border-color:var(--accent-d); color:var(--accent); }
+  .sum-card{ background:var(--card2); border:2px solid var(--line); border-radius:16px;
+    padding:4px 16px; margin-bottom:14px; }
+  .sum-row{ display:flex; justify-content:space-between; align-items:center;
+    padding:13px 0; border-bottom:1px solid var(--line); }
+  .sum-row:last-child{ border-bottom:none; }
+  .sum-row .sname{ font-size:18px; font-weight:800; }
+  .sum-row .sneed{ font-size:22px; font-weight:800; color:var(--accent); text-align:right; }
+  .sum-row .sstock{ font-size:12.5px; color:var(--dim); font-weight:600; margin-top:2px; text-align:right; }
+  .sum-row.short .sneed{ color:var(--urgent); }
+  .sum-row.short .sstock{ color:var(--urgent); }
+  .sum-row.zero{ opacity:0.38; }
+  .short-note{ background:var(--warn-bg); color:var(--warn); font-size:13.5px; font-weight:700;
+    padding:12px 14px; border-radius:12px; margin-bottom:14px; line-height:1.55; }
+  .quick-banner{ background:#12432a; border:2px solid var(--accent-d); border-radius:14px;
+    padding:12px 16px; margin:0 0 14px; }
+  .quick-banner .qb-step{ font-size:12.5px; color:var(--accent); font-weight:800; letter-spacing:.3px; }
+  .quick-banner .qb-main{ font-size:18px; font-weight:800; margin-top:3px; }
+  .quick-banner.done{ border-color:var(--safe); background:var(--safe-bg); }
+  .quick-banner.done .qb-step{ color:var(--safe); }
 </style>
 </head>
 <body>
@@ -267,6 +306,14 @@ let todayOut=[]; // 오늘 출고 기록 (이 미리보기 안에서만)
 let RECENTS=[];  // [v2] 시트에서 받아온 최근 5일 출고기록 (화면 하단 '최근 출고 내역')
 let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 표시용)
 
+// ===== [v3] QUICK 출고 상태 =====
+// CALC        : 시트 '구성표(수정❌)'에서 받아온 분해표 { items:[{name, mix:{코드:개수}}] }
+// quickInputs : QUICK 입력 화면의 상품명별 입력 수량 (문자열)
+// quick       : 출고 진행 상태 { need, remaining, order, idx } — 없으면 null(평소 모드)
+let CALC={items:[]};
+let quickInputs={};
+let quick=null;
+
 // ===== 작업자(출고관리자) =====
 // 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
 // (받아오면 시트 최신값으로 덮어씀 → 시트만 고치면 화면도 따라옴)
@@ -274,7 +321,7 @@ let WORKERS=['김현정','이성은','김경희','이정훈','문예지','한규
 let currentWorker='';  // 직전에 고른 작업자 기억(같은 사람이 LOT 여러 개 연달아 찍을 때 편함)
 
 // 페이지 열릴 때(또는 '재고 새로고침' 버튼) 시트에서 한 번에 받아온다.
-//   workers(작업자) + lots(현재 LOT 재고) + today(오늘 날짜)
+//   workers(작업자) + lots(현재 LOT 재고) + today(오늘 날짜) + [v3] calc(QUICK 분해표)
 // 실패해도 화면은 기본 목록·기본 LOT(코드 박힌 샘플)으로 계속 동작.
 let SHEET_TODAY='';   // 시트가 알려준 오늘 날짜(받기 전엔 빈값)
 function loadFromSheet(opts){
@@ -294,6 +341,12 @@ function loadFromSheet(opts){
       if(res && res.today) SHEET_TODAY=res.today;
       // [v2] 최근 5일 출고기록 (하단 '최근 출고 내역'에 표시)
       if(res && Array.isArray(res.records)) RECENTS=res.records;
+      // [v3] QUICK 분해표 — 비어 있다가 처음 받아졌고 QUICK 입력 화면이면 다시 그림
+      if(res && res.calc && Array.isArray(res.calc.items) && res.calc.items.length){
+        const wasEmpty = !CALC.items.length;
+        CALC = res.calc;
+        if(wasEmpty && view==='quick') render();
+      }
       // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
       if(res && Array.isArray(res.lots) && res.lots.length){
         LOTS = res.lots.map(l=>({
@@ -345,13 +398,15 @@ function badge(days){
 function render(){
   // 단계 표시
   $('st1').className='s on';
-  $('st2').className='s'+(view==='lots'||view==='qty'?' on':'');
+  $('st2').className='s'+(view==='lots'||view==='qty'||view==='qsum'?' on':'');
   $('st3').className='s'+(view==='qty'?' on':'');
   topBar.className='top'+(view!=='products'?' has-back':'');
 
   if(view==='products') renderProducts();
   else if(view==='lots') renderLots();
   else if(view==='qty') renderQty();
+  else if(view==='quick') renderQuick();
+  else if(view==='qsum') renderQsum();
 }
 
 function renderProducts(){
@@ -361,6 +416,13 @@ function renderProducts(){
       <span class="hint" style="margin:0;">어떤 에너지바를 출고하나요?</span>
       <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
     </div>`;
+  // [v3] QUICK 출고 입구
+  h+=`<button class="quick-btn" onclick="goQuick()">
+      <span>⚡ QUICK 출고
+        <div class="qb-sub">주문 여러 건 → 5종 필요수량 자동 합산 → 순서대로 출고</div>
+      </span>
+      <span class="qb-arrow">›</span>
+    </button>`;
   PRODUCTS.forEach(p=>{
     const st=stockOf(p.code);
     h+=`<div class="prod" onclick="pickProduct('${p.code}')">
@@ -409,6 +471,104 @@ function breakdownLineO(byCode){
     .join('');
 }
 
+// ===== [v3] QUICK 출고 화면들 =====
+function goQuick(){ view='quick'; pushStep(); render(); }
+
+// ① 주문 수량 입력 화면 (구성표 상품명 목록 그대로)
+function renderQuick(){
+  $('title').textContent='⚡ QUICK 출고';
+  $('sub').textContent='① 주문 수량을 입력하세요';
+  let h='';
+  if(!CALC.items.length){
+    h+=`<div class="short-note">상품 목록(구성표)을 아직 못 받아왔어요.<br>인터넷 확인 후 아래 버튼을 누르세요.</div>
+      <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>`;
+    screen.innerHTML=h; footer.innerHTML=''; return;
+  }
+  h+='<div class="hint">송장 보면서 <b style="color:var(--accent)">주문 들어온 상품만</b> 수량을 넣으세요. 안 온 상품은 비워두면 됩니다.</div>';
+  CALC.items.forEach((it,i)=>{
+    const v=quickInputs[it.name]||'';
+    h+=`<div class="qrow ${(parseInt(v)||0)>0?'has':''}" id="qrow${i}">
+      <div class="qname">${it.name}</div>
+      <input inputmode="numeric" value="${v}" placeholder="0" oninput="onQuickInput(${i},this)">
+    </div>`;
+  });
+  screen.innerHTML=h;
+  footer.innerHTML=`<button class="btn" onclick="goQsum()">필요수량 계산 →</button>`;
+}
+function onQuickInput(i,el){
+  const v=el.value.replace(/[^0-9]/g,'');
+  if(el.value!==v) el.value=v;
+  const it=CALC.items[i]; if(!it) return;
+  quickInputs[it.name]=v;
+  const row=$('qrow'+i); if(row) row.classList.toggle('has', (parseInt(v)||0)>0);
+}
+// 입력값 × 구성표 → 5종 필요수량 합산
+function computeNeeds(){
+  const needs={};
+  PRODUCTS.forEach(p=>needs[p.code]=0);
+  CALC.items.forEach(it=>{
+    const n=parseInt(quickInputs[it.name])||0;
+    if(n<=0) return;
+    PRODUCTS.forEach(p=>{ needs[p.code]+= n * (Number(it.mix[p.code])||0); });
+  });
+  return needs;
+}
+function goQsum(){
+  const needs=computeNeeds();
+  const total=PRODUCTS.reduce((s,p)=>s+needs[p.code],0);
+  if(total<=0){ showToast('⚠ 수량을 1개 이상<br>입력하세요'); return; }
+  view='qsum'; pushStep(); render();
+}
+// ② 5종 필요수량 + 재고 사전점검 화면
+function renderQsum(){
+  $('title').textContent='⚡ QUICK 출고';
+  $('sub').textContent=quick?'진행 상황 — 남은 필요수량':'② 5종 필요수량 확인';
+  const needs = quick ? quick.remaining : computeNeeds();
+  const shorts=[];
+  let h='<div class="sum-card">';
+  PRODUCTS.forEach(p=>{
+    const need=needs[p.code]||0, st=stockOf(p.code);
+    const short=need>st;
+    if(short) shorts.push(p.name+' '+(need-st)+'개 부족');
+    h+=`<div class="sum-row ${short?'short':''} ${need<=0?'zero':''}">
+      <div class="sname"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
+      <div><div class="sneed">${need}개</div><div class="sstock">재고 ${st}개${short?' · ⚠ 부족':''}</div></div>
+    </div>`;
+  });
+  h+='</div>';
+  if(shorts.length) h+=`<div class="short-note">⚠ ${shorts.join(' · ')}<br>부족한 종류는 있는 만큼만 출고하고, 나머지는 생산 후 마저 출고하세요.</div>`;
+  h+=`<div class="hint">${quick?'아래 버튼으로 이어서 출고하세요.':'아래 버튼을 누르면 5종을 순서대로, LOT 추천에 따라 출고합니다.'}</div>`;
+  screen.innerHTML=h;
+  footer.innerHTML = quick
+    ? `<button class="btn" onclick="quickResume()">계속 출고하기 →</button>`
+    : `<button class="btn" onclick="startQuick()">출고 시작 →</button>`;
+}
+function startQuick(){
+  const need=computeNeeds();
+  const order=PRODUCTS.map(p=>p.code).filter(c=>need[c]>0);
+  if(!order.length){ showToast('⚠ 필요수량이 없습니다'); return; }
+  quick={ need:need, remaining:Object.assign({},need), order:order, idx:0 };
+  curProduct=order[0]; justOut={};
+  view='lots'; pushStep(); render();
+}
+function quickResume(){
+  curProduct=quick.order[quick.idx];
+  view='lots'; pushStep(); render();
+}
+// 다음 상품으로 (마지막이면 QUICK 종료)
+function quickNext(){
+  quick.idx++;
+  if(quick.idx>=quick.order.length){
+    quick=null; quickInputs={};
+    view='products'; curProduct=null; justOut={};
+    render();
+    showToast('⚡ QUICK 출고 완료!<br>수고하셨습니다');
+    return;
+  }
+  curProduct=quick.order[quick.idx]; justOut={};
+  render();   // 화면 단계는 그대로 'lots' — 히스토리 추가 없음
+}
+
 function renderLots(){
   const p=PRODUCTS.find(x=>x.code===curProduct);
   $('title').textContent=p.name+' 출고';
@@ -418,7 +578,16 @@ function renderLots(){
   const live=all.filter(l=>l.stock>0).sort((a,b)=>a.days-b.days);
   const done=all.filter(l=>l.stock<=0).sort((a,b)=>a.days-b.days);
   const list=[...live,...done];
-  let h='<div class="hint">유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 꺼내세요.</div>';
+  let h='';
+  // [v3] QUICK 진행 배너
+  const rem = quick ? (quick.remaining[curProduct]||0) : null;
+  if(quick){
+    h+=`<div class="quick-banner ${rem<=0?'done':''}">
+      <div class="qb-step">⚡ QUICK ${quick.idx+1} / ${quick.order.length}</div>
+      <div class="qb-main">${p.name} — ${rem>0? '앞으로 <span style="color:var(--accent)">'+rem+'개</span> 더 출고':'✓ 필요수량 채웠어요. 다음 상품으로!'}</div>
+    </div>`;
+  }
+  h+='<div class="hint">유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 꺼내세요.</div>';
   let firstLive=true;
   list.forEach((l)=>{
     const [cls,txt]=badge(l.days);
@@ -435,8 +604,16 @@ function renderLots(){
     </div>`;
   });
   screen.innerHTML=h;
-  // 이 상품 출고를 마쳤으면 상품 선택으로 나가는 버튼
-  footer.innerHTML=`<button class="btn ghost" onclick="goProducts()">${p.name} 출고 끝 · 상품 선택으로</button>`;
+  // 하단 버튼: QUICK 중엔 다음 상품 이동, 평소엔 상품 선택 복귀
+  if(quick){
+    const last = quick.idx+1>=quick.order.length;
+    const label = rem>0
+      ? (last?'이 상품 건너뛰고 QUICK 마치기':'이 상품 건너뛰고 다음 →')
+      : (last?'⚡ QUICK 출고 마치기':'다음 상품 →');
+    footer.innerHTML=`<button class="btn ${rem>0?'ghost':''}" onclick="quickNext()">${label}</button>`;
+  }else{
+    footer.innerHTML=`<button class="btn ghost" onclick="goProducts()">${p.name} 출고 끝 · 상품 선택으로</button>`;
+  }
 }
 function goProducts(){ history.back(); }
 
@@ -447,10 +624,13 @@ function renderQty(){
   $('sub').textContent='③ 몇 개 꺼냈나요?';
   const n=qty===''?0:parseInt(qty);
   const over=n>l.stock;
+  // [v3] QUICK 중이면 남은 필요수량 안내 (수량은 이미 추천값으로 채워져 있음)
+  const remTxt = (quick && quick.remaining[l.code]!=null)
+    ? ` · QUICK 남은 필요 <b>${quick.remaining[l.code]}개</b>` : '';
   let h=`<div class="qty-wrap">
     <div class="qty-info">
       <div class="qi-lot"><span class="dot" style="background:${p.color}"></span>${p.name} · ${l.lot}</div>
-      <div class="qi-meta">유통기한 <b>${l.exp}</b> · 현재재고 <b>${l.stock}개</b></div>
+      <div class="qi-meta">유통기한 <b>${l.exp}</b> · 현재재고 <b>${l.stock}개</b>${remTxt}</div>
     </div>
     <div class="qbox" style="${over?'border-color:var(--urgent);color:var(--urgent)':''}">${qty===''?'0':qty}</div>
     <div class="qmax ${over?'over':''}">${over?'⚠ 재고('+l.stock+'개)보다 많아요!':'최대 '+l.stock+'개까지'}</div>
@@ -489,7 +669,17 @@ function renderQty(){
 }
 
 function pickProduct(code){ curProduct=code; view='lots'; pushStep(); render(); }
-function pickLot(lot){ curLot=lot; qty=''; loss=0; view='qty'; pushStep(); render(); }
+function pickLot(lot){
+  curLot=lot; loss=0;
+  qty='';
+  // [v3] QUICK 중이면 수량을 "남은 필요수량과 이 LOT 재고 중 작은 값"으로 미리 채움
+  if(quick){
+    const l=LOTS.find(x=>x.lot===lot);
+    const rem=(l && quick.remaining[l.code])||0;
+    if(l && rem>0) qty=String(Math.min(rem, l.stock));
+  }
+  view='qty'; pushStep(); render();
+}
 function onLossInput(el){
   let v=parseInt(el.value.replace(/[^0-9]/g,''))||0;
   loss=v;
@@ -511,6 +701,10 @@ function confirmOut(){
   l.stock-=n;                      // 화면 안에서 재고 차감
   todayOut.unshift({code:l.code,lot:l.lot,qty:n});
   justOut[l.lot]=(justOut[l.lot]||0)+n;
+  // [v3] QUICK 중이면 남은 필요수량 차감
+  if(quick && quick.remaining[l.code]!=null){
+    quick.remaining[l.code]=Math.max(0, quick.remaining[l.code]-n);
+  }
 
   // 구글 시트로 전송 — 그로스와 같은 통합 스크립트가 받는 형식으로 통일
   //   { type:'normal', otype:'일반주문', manager, lines:[{lot,qty,loss?,memo}] }
@@ -546,16 +740,22 @@ function showToast(msg){
 // ===== 시스템 뒤로가기(안드로이드 ← 버튼) 처리 =====
 // 단계가 깊어질 때 히스토리를 한 칸 쌓고, 뒤로가기(popstate)가 오면 한 단계만 내려간다.
 // 화면 안 ‹ 버튼·기록 후 복귀도 history.back()으로 통일 → "히스토리 1칸 = 화면 1단계" 유지.
+// [v3] QUICK 계보: products → quick(입력) → qsum(확인) → lots → qty
 function pushStep(){ history.pushState({view:view}, ''); }
 function stepBack(){
   if(view==='qty'){ view='lots'; }
-  else if(view==='lots'){ view='products'; curProduct=null; justOut={}; }
+  else if(view==='lots'){
+    if(quick){ view='qsum'; }
+    else { view='products'; curProduct=null; justOut={}; }
+  }
+  else if(view==='qsum'){ view='quick'; }
+  else if(view==='quick'){ quick=null; view='products'; }
   render();
 }
 window.addEventListener('popstate', ()=>{ stepBack(); });
 $('back').onclick=()=>{ history.back(); };  // 시스템 뒤로가기와 같은 경로로 처리
 render();
-loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜 받아오기(실패해도 기본값으로 동작)
+loadFromSheet();   // 페이지 켜질 때 시트에서 작업자+LOT재고+오늘날짜+구성표 받아오기(실패해도 기본값으로 동작)
 </script>
 </body>
 </html>
