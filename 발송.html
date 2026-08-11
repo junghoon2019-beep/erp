@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>발송 현황</title>
+<!--
+  발송.html v1 — 발송 취합 보기 전용 화면 (폰)
+  ────────────────────────────────────────────
+  정본 = claude/발송취합_구현설계_v1.md §3-3
+  · 읽기 전용. 터치 입력 없음 — 한눈에 보는 용도.
+  · 원천 = 마스터 '발송취합' 탭 (송장자동화_잡 v1.16 이 매시 갱신)
+  · 중계 = 발송취합 웹앱 v1 (독립 스크립트 — QUICK/출고 앱과 무관)
+
+  ★ 배포 전 할 일: 바로 아래 AGG_URL 을 웹앱 exec 주소로 바꾸세요.
+-->
+<style>
+  :root{
+    --bg:#0f1115; --card:#1a1d24; --line:#2a2f3a;
+    --tx:#f3f4f6; --dim:#9aa3b2;
+    --hi:#fbbf24; --quick:#fb923c; --ok:#34d399;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",
+                "Malgun Gothic",system-ui,sans-serif;
+    font-size:17px; line-height:1.45;
+    padding:0 0 40px; padding-bottom:calc(40px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:620px; margin:0 auto; padding:0 14px}
+
+  /* ── 머리 ── */
+  header{
+    position:sticky; top:0; z-index:10; background:var(--bg);
+    padding:14px 0 10px; border-bottom:1px solid var(--line);
+    padding-top:calc(14px + env(safe-area-inset-top));
+  }
+  .hrow{display:flex; align-items:center; gap:10px}
+  .hdate{font-size:23px; font-weight:800; letter-spacing:-.4px}
+  .hupd{font-size:14px; color:var(--dim); margin-top:2px}
+  .hupd b{color:var(--tx); font-weight:600}
+  .stale{color:var(--hi)!important}
+  .rf{
+    margin-left:auto; flex:none; width:52px; height:52px; border-radius:14px;
+    border:1px solid var(--line); background:var(--card); color:var(--tx);
+    font-size:23px; line-height:1; cursor:pointer;
+  }
+  .rf:active{background:#242833}
+  .rf.busy{opacity:.45}
+
+  /* ── 합계 ── */
+  .sum{
+    display:flex; align-items:baseline; gap:12px;
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px 18px; margin:14px 0 6px;
+  }
+  .sum .n{font-size:42px; font-weight:800; letter-spacing:-1.5px; font-variant-numeric:tabular-nums}
+  .sum .u{font-size:19px; color:var(--dim)}
+  .sum .k{margin-left:auto; font-size:17px; color:var(--dim); text-align:right}
+
+  /* ── 섹션 ── */
+  h2{
+    font-size:15px; font-weight:700; color:var(--dim);
+    margin:26px 0 8px; letter-spacing:.3px;
+  }
+  .list{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden}
+  .row{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px; border-top:1px solid var(--line);
+  }
+  .row:first-child{border-top:0}
+  .row .nm{font-size:19px; font-weight:600; letter-spacing:-.2px; word-break:keep-all}
+  .row .q{
+    margin-left:auto; flex:none; font-size:29px; font-weight:800;
+    font-variant-numeric:tabular-nums; letter-spacing:-1px;
+  }
+  .row .q small{font-size:15px; font-weight:600; color:var(--dim); margin-left:2px}
+  .empty{padding:20px 16px; color:var(--dim); font-size:17px}
+
+  /* ── 방문/퀵 ── */
+  .qcard{
+    background:var(--card); border:1px solid #4a3320; border-left:5px solid var(--quick);
+    border-radius:14px; padding:14px 16px; margin-bottom:10px;
+  }
+  .qhead{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .qtag{font-size:20px; font-weight:800; color:var(--quick)}
+  .qwant{
+    font-size:16px; font-weight:700; background:#3a2a17; color:var(--hi);
+    padding:3px 10px; border-radius:8px;
+  }
+  .qsub{font-size:13px; color:var(--dim); margin-top:3px; word-break:break-all}
+  .qitems{margin-top:10px; border-top:1px solid var(--line); padding-top:6px}
+  .qitems .row{padding:8px 0; border:0}
+  .qitems .row .nm{font-size:18px}
+  .qitems .row .q{font-size:24px}
+
+  /* ── 예약 ── */
+  details{background:var(--card); border:1px solid var(--line); border-radius:14px;
+          margin-bottom:10px; overflow:hidden}
+  summary{
+    list-style:none; cursor:pointer; padding:15px 16px;
+    display:flex; align-items:center; gap:12px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary .d{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums}
+  summary .o{font-size:15px; color:var(--dim)}
+  summary .s{margin-left:auto; font-size:24px; font-weight:800; font-variant-numeric:tabular-nums}
+  summary .s small{font-size:14px; color:var(--dim); font-weight:600; margin-left:2px}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  details .row{padding:11px 16px}
+  details .row .nm{font-size:17px; font-weight:500}
+  details .row .q{font-size:22px}
+
+  .err{
+    background:#3b1d1d; border:1px solid #7f2d2d; color:#fecaca;
+    border-radius:12px; padding:12px 14px; margin:12px 0; font-size:15px;
+  }
+  .foot{margin-top:26px; text-align:center; color:var(--dim); font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="hrow">
+      <div>
+        <div class="hdate" id="hdate">발송 현황</div>
+        <div class="hupd" id="hupd">불러오는 중…</div>
+      </div>
+      <button class="rf" id="rf" onclick="load(true)" aria-label="새로고침">↻</button>
+    </div>
+  </header>
+
+  <div id="err"></div>
+  <div id="body"></div>
+
+  <div class="foot">매시 자동 갱신 · 보기 전용</div>
+</div>
+
+<script>
+// ★★ 배포 시 여기만 바꾸세요 — 발송취합 웹앱의 exec 주소 ★★
+const AGG_URL = 'https://script.google.com/macros/s/AKfycbzJ1aHWyzhursfZFNMYPKEZfF7v5HDEJBK4YA1cwSVm9rfGiAYJb7-OLuBZnAbDKkKG1w/exec';
+
+const AUTO_MS = 5 * 60 * 1000;   // 5분마다 자동 새로고침
+let DATA = null, busy = false;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// 수량 0 = 미기록 안내 행 → 숫자 대신 비움
+const qtyHTML = q => q > 0 ? (q + '<small>개</small>') : '<small>—</small>';
+
+function wd(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if(!m) return '';
+  const d = new Date(+m[1], +m[2]-1, +m[3]);
+  return ['일','월','화','수','목','금','토'][d.getDay()];
+}
+function md(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? (+m[2]) + '/' + (+m[3]) : (iso || '');
+}
+function minsAgo(hm){
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hm || '');
+  if(!m) return null;
+  const now = new Date();
+  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +m[1], +m[2]);
+  const d = Math.round((now - t) / 60000);
+  return (d < 0 || d > 24*60) ? null : d;
+}
+
+function load(manual){
+  if(busy) return;
+  busy = true; $('rf').classList.add('busy');
+  const url = AGG_URL + (AGG_URL.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now();
+  fetch(url, {method:'GET'})
+    .then(r => r.json())
+    .then(j => {
+      if(!j || j.ok === false) throw new Error((j && j.error) || '데이터 오류');
+      DATA = j; $('err').innerHTML = '';
+      render();
+    })
+    .catch(e => {
+      $('err').innerHTML = '<div class="err">지금 못 불러왔어요 — ' + esc(e.message) +
+        (DATA ? '<br>아래는 마지막으로 받은 내용입니다.' : '') + '</div>';
+      if(manual && !DATA) $('body').innerHTML = '';
+    })
+    .then(() => { busy = false; $('rf').classList.remove('busy'); });
+}
+
+function render(){
+  const d = DATA;
+  $('hdate').textContent = md(d.date) + '(' + wd(d.date) + ') 발송';
+  const ago = minsAgo(d.updated);
+  const stale = (ago !== null && ago >= 90);
+  $('hupd').innerHTML = '갱신 <b>' + esc(d.updated) + '</b>' +
+    (ago === null ? '' : ' <span class="' + (stale ? 'stale' : '') + '">· ' +
+      (ago < 1 ? '방금' : ago + '분 전') + '</span>');
+
+  let h = '';
+
+  // 합계
+  h += '<div class="sum"><span class="n">' + d.todaySum + '</span><span class="u">개</span>' +
+       '<span class="k">' + d.todaySorts + '종<br>오늘 발송분</span></div>';
+
+  // 오늘 발송분
+  h += '<h2>오늘 발송분</h2>';
+  if(d.today.length){
+    h += '<div class="list">';
+    d.today.forEach(it => {
+      h += '<div class="row"><span class="nm">' + esc(it.n) +
+           '</span><span class="q">' + qtyHTML(it.q) + '</span></div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="list"><div class="empty">아직 접수된 건이 없습니다.</div></div>';
+  }
+
+  // 방문/퀵
+  h += '<h2>방문 · 퀵 준비분</h2>';
+  if(d.quick.length){
+    d.quick.forEach(q => {
+      const head = q.head.split('·');
+      h += '<div class="qcard"><div class="qhead"><span class="qtag">★ ' +
+           esc((head[0] || '').trim()) + '</span>';
+      if(q.want) h += '<span class="qwant">' + esc(md(q.want)) + ' 까지</span>';
+      h += '</div>';
+      if(head.length > 1) h += '<div class="qsub">' + esc(head.slice(1).join('·').trim()) + '</div>';
+      if(q.items.length){
+        h += '<div class="qitems">';
+        q.items.forEach(it => {
+          h += '<div class="row"><span class="nm">' + esc(it.n) +
+               '</span><span class="q">' + qtyHTML(it.q) + '</span></div>';
+        });
+        h += '</div>';
+      }
+      h += '</div>';
+    });
+  } else {
+    h += '<div class="list"><div class="empty">없음</div></div>';
+  }
+
+  // 예약
+  h += '<h2>예약 발송분</h2>';
+  if(d.resv.length){
+    d.resv.forEach((r, i) => {
+      h += '<details' + (i === 0 ? ' open' : '') + '><summary>' +
+           '<span class="d">' + esc(md(r.d)) + '</span>' +
+           '<span class="o">' + esc(r.d === '(미상)' ? '' : '(' + wd(r.d) + ') ') + esc(r.orders) + '</span>' +
+           '<span class="s">' + qtyHTML(r.sum) + '</span></summary>';
+      if(r.items.length){
+        r.items.forEach(it => {
+          h += '<div class="row"><span class="nm">' + esc(it.n) +
+               '</span><span class="q">' + qtyHTML(it.q) + '</span></div>';
+        });
+      } else {
+        h += '<div class="empty">상품명 미기록 (v1.16 이전 접수)</div>';
+      }
+      h += '</details>';
+    });
+  } else {
+    h += '<div class="list"><div class="empty">없음</div></div>';
+  }
+
+  $('body').innerHTML = h;
+}
+
+load();
+setInterval(() => load(false), AUTO_MS);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) load(false); });
+</script>
+</body>
+</html>
