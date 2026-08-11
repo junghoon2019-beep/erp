@@ -14,10 +14,15 @@
      남은 물량만 출고한다(하루 2회째 QUICK 중복출고 방지). 차감 근거를 화면에 표시하고
      [차감 끄기]로 언제든 주문 전량 보기로 되돌릴 수 있다. 서버·Apps Script 무변경.
      v3.2.1 (2026-08-11): 매니페스트 scope를 '/erp/' 폴더 전체 → '자기 파일'로 좁힘.
-     (폴더 범위로 두면 같은 폴더의 다른 앱을 크롬이 같은 앱으로 취급해 ship 앱이 열렸다.) -->
+     (폴더 범위로 두면 같은 폴더의 다른 앱을 크롬이 같은 앱으로 취급해 ship 앱이 열렸다.)
+     v3.3 (2026-08-11): QUICK 입구를 [주문 출고] / [수동 출고] 둘로 분리.
+     수동 출고 = 원래 설계 v1의 '출고수량계산기' — 서비스·샘플 등 주문 외 물량.
+     자동 채우기·기출고 차감을 걸지 않고, 사유를 골라 memo에 남긴다.
+     차감 계산은 memo가 붙은(=주문 외) 기록을 제외한다 → 서비스 출고가 주문 차감을 오염시키지 않는다. -->
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoi7JeQ64SI7KeA67CUIOy2nOqzoCAoT1VUKSIsInNob3J0X25hbWUiOiLstpzqs6AgT1VUIiwic3RhcnRfdXJsIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8iLCJzY29wZSI6Imh0dHBzOi8vanVuZ2hvb24yMDE5LWJlZXAuZ2l0aHViLmlvL2VycC9vdXQvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJvcmllbnRhdGlvbiI6InBvcnRyYWl0IiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjFiMTQiLCJ0aGVtZV9jb2xvciI6IiMwZjFiMTQiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQ0FJQUFBQjdHa090QUFBV1FrbEVRVlI0MnUzZGUzaFY1WUhvNGIxenYwQUlJZUV1QVFGSmtLdUExZ3ZWUTBIc0dSeEwxZEY2ZHh5bm83WWRQYlh0ZVJ4OVBMVmpXM3R4K3ZUWU1sYmwxTEd0dGxwYlFiQmd4UUlpUlJFVkNQZHJ1RVFnaEV0SXlHVW4rL3d4ZldaNnpuU2N5dnFTblUzZTl6OGZ5YmUvOWEyVi9jdmVlNjIxNCtWUFhSTURvUHZKc0FRQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFmMXFXSlRqOVpHZGtqZXA5eHRDaS9vTjZsQTRzTEIzWW83Ui9RZS9DN0x6OHJOeThySnk4ekp6Y3pKeVc5dGFUaWVhbVJHdFRvcmt4MFh5ZzhjaitodHA5SjJyM045UlcxeC9jZUhoM1UxdUxsUVFCSUEyVTVSZFBIVFIyZk9tSUNXWERLMHZLY3pLelAvemY1MlhtNUdYbXhITC84SjluOXhuNngvODMwZDYyNWVpZTl3NXRYM3RvK3h2NzErMDljY2dLdytrblh2N1VOVlloZlEzck5XRG1rQ21YbGsrZTJIZGtQQmJ2b0VmWldMZDcwZTYzRis5ZXZhRnVWd28zdGlTdjU1cnJub2c0eUcydmZ1dTFQV3M2WW5wenB0M3p5YUhuUlJsaHlaNTMvL3JWUno3a0g5dzhldVpYUDNacjl6bTg1NnlkOThqcW4vazE5d3FBLzNlM1pXVE9HbmIrcmFNdkcxODJvaE1lcnJLa3ZMS2svTzZKVjIwN3V1L0hHMzd6NHJabGpZbG1ld0VFZ0U1Vm5OdmpsdEdYWFY4eHZTeS91UE1mZlVUeG9IKzg0TFl2VDc3MjUxdGVuMXUxc0thaHpoNEJBYUF6L3VxL3NXTEczMCs4cWppM1IycG5VcFJUZVB1WVdUZFV6SGg4M2Z6SDE4MC82ZFVBQ0FBZFo5b1pFKzgvOThZemV3M3NPbFBLejhxOWUrSlYxNDZhOXEzVno3NjRiYmw5QkFKQStPZlpCejkyODdWblRldWEwK3RmVVBMb3grLzY1TkR6dnJ6ODhTUE45ZllYcEJFWGduVnBsU1hsTDEveGpTNzc3UDl2Wmd5Wi9NcnNSODdyUDlvdUF3RWdnTm5EcDc1MCtUOE83MHB2KzN6NFM0Rm5QL25BMzQ2ZFpjZUJBQkRKYldmLzkwY3Z2dk8vdko2cmF4MU04Zmg5VTI2NGI4b05IWGRGQWhDUXp3QzZvcTlNL3N3ZDQ2NUkwOG4vN2RoWmZmSjZmbVhGanhMdGJYWWxlQVhBUjNEZmxCdlM5OW4vWDEwNTh1THZUcjNUNndBUUFENkNtMGZQUEQzZVJyOWkrSVZmbm55dEhRb0N3Si9sMHZJcEQ1NTN5Mm16T1hlTXUrTDZpaGwyS3dnQS80VlJ2Yy80L2lXZno0aWZWbStiUEhUK3JSOGI0TnhRNktKOENOd2xaR2RrZmUvaXorVmw1blRFNEp1T1ZDL2Z0M1pqM2U3dHgycHFHbW9iV3B1YkVzMTVXVG1GMlhsbCtjWERldzJxNkgzR2hZUEdqdTF6WnZEOFpNWXpIcDE2NTh4ZmY3bStwZEZlQmdIZ1Q3aDMwaldWSmVWaHg2dzllZXk1TFV0K3R2bTEvU2RxLytQL2JXaHRhbWh0T3RoNHRPcndybm14V095ZDUwcnlpcTRlZWZIMUZUT0c5T3diY0JvRGU1UStkUDZ0OXl6OWdiME1Bc0QvNzl4K0ZiZVBDZm5CYjJPaStmRzE4eDVmTi84amZhdFhYZFB4eDlmTmYzTDlndXNxcHQ4ejhlcVN2SjZoNWpONytOUlhkNjlldUd1VmZRMEN3TCtMeCtMLzYveGJBcjczc3E1MngxMnZmNis2L3VDcC9YaGJzdjJaallzWDdGejU2TWZ2dW1Ud2hGQ3pldUM4bTE3YnM2YTVyZFVlaitMcERZdWUzckFvK0xCZnYrQnZycXVZSG1XRTFRYzJYN1hnUVRzbzdmZ1FPTVZtajdob2RNblFVS1A5YXZ2eUt4YzhlTXJQL24vMGFxRCsxc1dQL08vM1hndzFzUUdGZlc0WmZabmREUUxBSCtSa1puL3huR0JmeWZuY2xpVmZYUGJEbGtCL1pTZGp5ZSt1K1VYQUwrUzdhL3luVXY1TkJvQUFkQlUzVkV3ZjFLTTB5RkMvclg3bnZoVlB0Q2VUWVdjNForMjhwNm9XQmhtcUtLZndzMlAvMGs0SEFTQVdqOFZ2cXB3WlpLanR4L2IvL2RMSGdqLzcvNnV2di9XVDVmdldCUm5xTTZPbTVhYlY3ZTFBQU9nUVV3ZU5HMXJVUC9vNGJjbjIvN0hzaHcydEp6dG9ubTNKOWk4dG54UGtSUDdpM0I2enpyekFyZ2NCNk81dXJMdzB5RGh6cXhhK2YyaGJoMDcxZzhhNmI3ejkweUJEM2VUbUVDQUEzVnkvZ3Q3VHpwZ1lmWnhqelEzZkQzZXV6b2Q0YnN1U3JVZjNSaDluZk5tSWdHYzlBUUtRZnFZUG1ad1pEN0Q0VDZ4L3VYUHVzdENlVEg3djNSZUNESFZwK1dRSEFBaEFkdzdBT2RFSGFXcHIrWmVOaXp0dHpndDNyb3AraFVFc0ZwcytaSklEQUFTZ204clB5cjFnd0pqbzR5ellzZko0UzBPblRUc1pTLzU4eTVMbzQ0enBNNngvUVluREFBU2dPN3BvNEpnZ1owUCtmTXZyblR6ejU3ZitMc2pKcGtFKy93QUVJUDFNNlZjWmZaQzZwdnJWQnpkMzhzd1BOaDROY3NiUjVINFZEZ01RZ081b1hPbVowUWQ1ZmMrYURycnk2OE85dXVlZExySUNnQUNrbVhnc2ZuYWZvZEhIZVdQLytwVE0vNDE5YTZNUGNtYXZnWVhaZVE0R0VJRHVaV2l2L2oxekNxS1A4KzZoclNtWi80YTYzZEh2NnB3Umo1L3RhZ0FRZ081bWRJaHYvanJTWEwvcitBY3BtWCtpdlczOTRaMEIxaUhFeXlCQUFOTEo0QjVsMFFmWlhMY25oWnV3K1VpQVJ3OTFHMVJBQU5MR2dNSSswUWZaZWJ3bWhadXdLOFNqQjFrSFFBRFN5Y0QwRDhET1l6VmRaQjBBQWVoMnJ3QnFHdXBTdUFsQkhuMUFvYmVBUUFDNm1iNEZ2YU1QVXRkMFBJV2JjRGpFby9jdEtIWXdnQUIwTHdWWnVWM2tLVGkxK2NtTVoyUm5aRGtlUUFDNmtieXNuT2lEZE00dG9QOHp6VzJ0UWI1NlBzaFNBQUtRSnNzZGp3ZjVzN2VsTFpIYURXbHREekNCdkV3QkFBSG9Qbi8rQjNyS0MvTDhHKzFGUUlBSjVIc0ZBQUxRZmVTRXVBdDBMQlpyYlc5TDdZWWtRa3dnMUdvQUFwQUdncngxSG92RnNqTXlVN3NoV1NFbUVHbzFBQUZJQTAxdExZRUNrT0x6WjNJeXM3ck9hZ0FDa0FiYWs4a2diOTluWjZZNkFDRUsxSlR3Q2dBRW9GdTlDRWdFK0xPM0tMc2doWnVRazVrZDVPMzdrNGxteHdNSVFEZHlNa1FBU3ZKNnBuQVQrb1I0OUxaa2U4clBaUUlCb0ZNZE9uazB3Rk53ZnErVUJxQlhGMWtIUUFEU3lmNkd3OUVINlY5UWtzSk42RjhZNE5GclRoeDJNSUFBZExNQW5LaU5Qc2l3WGdOU3VBbkRpZ0k4ZXBBUUFnS1FUbXBDUFBFTksrcWYwZ0QwVDhrNkpOcmJBeHp4OFhoSC9TN0ZvLzQySlh3b2dnQ2MzdmFlT0JSOWtGRzl6MGpoSnB3VjR0SDNmZlIxQ0hMaFdGYUhYVUlSL2RxSVpsZkdJUUNudDQxMXU2TVBVcEpYVk42elgwcm1uNVdST2FaMFdQUnhOdFJWcCtUNXNlT3VvWXMrc2dBZ0FLZTVIY2RxR2xwUFJoOW5ZdCtSS1psL1pVbDU5RnZhSldQSjlZZDNuc0pQUlQ5enRDaW5veTZoS01vcGpCd0FsMFlqQUtlMVpDeFpkWGhYOUhFdUhEZ21KZk8vYU9EWTZJUHNQTlVLTnJaR3ZYYXNWMjVoQjYxTTlKR0RYQ01DQXRDbHJhM2RFWDJRYVdlYzAzR2ZaMzZJR1VNbXBYQUZhcHVPUlh6b3Z2bTlPMmhseXZLTEk0N2cyZ2dFNFBUMzlvRk4wUWZwazFjMHFlK29UcDU1YVg2dkNXVUIzbnBhZldEenFmM2dnY1lqRVI5NmNNK3lqbGlaa3J5aTZGLzJHWDNyUUFDNnVqZjJyd3R5UXN0Zm5YVkpKOC84NnBHWEJIblo4ZHFlTmFmNkZGa1g4YUU3NkF6YW9TR0dGUUFFNFBUWDBOcTBzbVpEOUhGbURUdS9SM1orcDAwN0hvdGZPMnBhOUhFMjFPMDY1WXNoUG1pSUdvQ2hSUU9pLzZuK0g0MHVLWTgreUFlUjh3WUNrQVordStlZDZJUGtaK1hlV0hscHA4MTU1dEFwUWM0OS9XMzFtbFArMlczSDlrYzk0dVB4c2FYRGd5L094TElSRVVkb2FXdmRVMy9RcndZQzBBMENVTDI2UFptTVBzNW54MTdlT1M4Q011THhleVplSFdTb1JidmZPdVdmM1hnNHdGVVVGM1hBQ1ZRWERvcDZjdFRXby9zU3FmNm1Ud1NBemxEVFVQZjYzbmVqajFPYzIrTnpFMlozd29TdkhubEprTXVQMTlidWlISVc3TmFqZTZNL1M4NHNQemZzNG93dkhSNzk5bndiNm5iNXZVQUF1b3RuTmk0T01zN3RZMmFOTFQyelE2ZmF0NkQ0SDg2OW9TdHNkV3Q3WXV2UnZSSG5jRmJ2d2VPQ3J0aFZJeStPUHNpR0VGZUhnQUNraDJYNzNxOE84WjV2Wmp6ajBZL2ZXWmlkMTFHSFNEeis3WXZ1aUg2WmF5d1dPOWJjTUgvSG14RUhXVmxURlgwbWZ6ZnVpbERyVTVyZjYrb1FwMk1GT1M4QUJDQTl0Q2VUVDIvNFRaQ2hSaFlQL3FlUDN4V1BkY2gxWVYrWmZOM0ZnOGNIR2VxNUxVdWlmeEg4MG4zdlI1L0pKNGVlTzdsZm1Lc283cDEwVGZSN1l4eG9QTExwU0xWZkNnU2dHL25KcGxkckF0MFcvOUx5S1E5ZmNGdndCdHcrWnRabngxNGVaS2o2bHNaL1hqc3YramlyYWpaR3YybGFQQmIvenRRN290KzhZZnFRU2RlZUZlRFUyR1VocWdZQ2tFNmEyMXEvcytZWG9VYTdybUw2ZDZiK1hhaTdYY1pqOGJzblhoWHFyZjlZTFBiRHRTOGRhYTZQUGs1VFc4dnlmV3VqanpPMHFQK1QwNzhVNVJ5cWMvdFhmditTTHdSWm5GZXIzL0hyZ0FCME83L2F0bXhUWGJEWC9sZU92UGlGV1Y4ZDNDUHEzUTZLYzNzOE9lTkxkMCs4S3RURWFocnEvay9WSzZGR2UzN3I3NEtNTTZWZnhZdXp2bGI1MGEvaGlzZmlOMVZlK3RQTC9pSElOV1dIbTQ0djJiUEc3d0lDME8yMEo1TVAvdjdIeVZneTFJRGpTNGN2bXYzdHo0MmZmV3B2VEdmR002NnJtTDdreWtjL2NjWTVBVGZ6NGJlZWFRcDNyK1BYOXF5cFBYa3N5RkJuOVI0OC95Ky8vdkFGdC8yWnQ0aklqR2ZNR0RMcDE1ZC83YUh6L3pyVWk2MFh0aTUxQlFBcGtXVUpVbTdWQnh1ZVdyL3diOGI4UmFnQkM3UHo3cDEwemMyalp6NjdlY216bTEvN016OW1LTW5yZWVXSWk2K3ZtRDQwOU4xeTV1MVk4ZkxPbFFFSFRMUzNQYi8xZDNjRU9wTW5LeVB6K29vWjExZk1lTDkyK3h2NzFyMTNhRnQxL1lFUEd1c2FXNXZia20yNW1UbTljZ29IOWlnOXEzandPWDFIZm1MSXBENTVSUUczSlJsTFByZGxpZDhDQktENyt0WTd6MTAwYUd4Rjd5RUJ4eXpMTC83Q2hFOS9mc0xzVFhYVnkvZXQyMUMzYThleC9UVU5kWTJKcHBPSjVyek1uSUxzdkxMODR1RzlCbGFVRExsbzROaHhwY003NHY3U05RMTE5Nzg1Ti9pd1Q2eGZjRlBsekxBbnY0NHZIVDYrQSs0UzhlSG03M2h6NTdFYXZ3SUlRUGZWMHRaNjk5TEhYcnI4NGR6TTdMQWp4MlB4eXBMeXloQzNLanNGN2Nua0Y1Zjk0SGhMUS9DUjY1cU96NjFhK1BrSm4wN3IvWjVvYjN0MHpmT09mMUxGWndCZHhhYTY2bnVXUGhia0JrRmR4MWRYL2ZqTkVOZHQvVWsvV3Y5eVhWTjlXcS9QejdjczJYWDhBd2MvQWtCczRhNVZENy8xekdtek9UOWE5L0xUR3haMTNQajFMWTBQckh3cWZkZW5wdUh3TjFjLzY3QkhBUGlEcDZvV3pxMWFlQnBzeU1zN1YzN2o3WjkyOUtNczJQbjdlVHRXcE9QNkpHUEpMeTc3WVgxTG8yTWVBZURmZlczVk0wK3Nmem10TitIWDI5KzRlK2xqQWM5dC9SQVBySnk3dS81QTJpM1I0K3ZtZDl5Yll5QUE2U29aU3o3ODFrKysrZmJQMG5UK2M2c1czclAwQjUxMll2dXg1b2FiRjMyanJ1bDRlcjA4ZXVSdGIvNGdBUHduL25uZHZIdVh6Mmx0VDZUUm5OdVR5VWRXUC92UXFuL3BuTC85LzgydTR4L2N1dmlSeGtSeldxelN5cHFxZTViK29KT1hDQVFnemJ5d2RlbnMrUStreTBuaUJ4dVAzcmpvNFRsclgwckpvNzlmdS8zYWhWOE5kWGx3eDFtMCsrMWJGeitTWGwxSEFFaU45WWQzL3NWTC8vT0ZyVXU3K0R4ZjI3UG1zbDkvYWNYKzlTbWN3OXJhSForYWYvKzJvL3U2N0NyTnJYcmxqaVdQQnJ3bEJnakFhYTR4MFh6djhqbTMvL2JiWGZPRThZT05SKzlkUHVlMlY3L1ZGVTdKMzN2aTBCWHo3Ly9aNXRlNjJpclZOZFhmOWZyM0hscjE5R2wyblFmcHpwWEE2ZUhWNm5kZTMvdmVMYU12KzhLRVR3ZjVjcTdvbXRwYW5seS9ZTTdhbHhwYW03ck9RalcwbnJ4dnhST3Y3UHI5TnkvODdLQWVwVjFoU3Evc1duWC9tMDhkVHF1UHFSRUF1cFpFZTl1VDZ4ZjhjdXV5Vzg2KzdQcFIwMHZ6ZTZWcUp2VXRqYzl2L2QwVDZ4ZUUramFiNEpidlcvZmZmbm5QRFJYVDd4ejNxUlF1MU1xYXF1K3UrY1hxQTVzZHZRZ0FBUnhwcnYrbk5jOC85dDZ2TGovei9KdEhYOWJKTnkvYmZtei8weHQrODh0dHk3clVYLzEvVWt0YjY5eXFWNTdkdk9Rem96N3htVkhUUmhZUDdzeFVMOW16WnU2R1YzN3ZhMzRSQUlKcmJVKzh1RzM1aTl1V245bHI0TXp5S1RQTHA0d3ZHOTVCM3drY2k4VTJIYWxldkh2MTR0MXZyeis4TTcwVzZtU2llVzdWd3JsVkN5ZVVqZmlya1pkTUh6SzViMEZ4QnoxV2V6SzUvdkRPZVR0V3ZMaHRlWjAzZkVnSDhmS25yckVLcDRGK0JiMHZHalJ1UXVudzhXVWpLa3VHUlB5dWtyWmsrOVlqZTkrcjNmYitvZTByOXErcnJqOTQyaXhVUmU4aFV3ZU51MkRnMldQNkRDdkxqeHFEUkh2YmptTTE3eDdhdW56ZjJoWDcxd2Y1emtzUUFFNWRka1pXWmNtUThxTCtnM3VVRGl3c0hkaWp0SDlCU1VGMlhsNW1UbjVXVGw1V1RrNUdkbXQ3b2luUmNyS3R1U25SMHBob090aDRkUCtKMm4wTnRmdFBITjVkZjJCajNlNlRhWEpkVlJRbGVUMHJTOHBIRmc4ZVVOaW5iMEZ4djRLU3Z2bkZoZG41dVpuWnVabFp1Wms1R2ZHTTF2WkVjMXRMYzF0clU2TGxhUE9KQTQxSERwNDhlckR4U0hYOWdVMTFlN1llM2V1a2ZnUUFnRFRqT2dBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFiQUVBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUgvcy93TEh1Uk9NR0YrNGtnQUFBQUJKUlU1RXJrSmdnZz09Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyIsInB1cnBvc2UiOiJhbnkgbWFza2FibGUifV0sImlkIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8ifQ==">
 <meta name="theme-color" content="#0f1b14">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="출고 OUT">
@@ -242,6 +247,22 @@
   .quick-banner .qb-main{ font-size:18px; font-weight:800; margin-top:3px; }
   .quick-banner.done{ border-color:var(--safe); background:var(--safe-bg); }
   .quick-banner.done .qb-step{ color:var(--safe); }
+  /* [v3.3] 수동 출고 — 사유 선택 */
+  .why-box{ background:var(--card2); border:2px solid var(--line); border-radius:16px;
+    padding:14px 16px; margin:0 0 14px; }
+  .why-box.need{ border-color:var(--warn); }
+  .why-label{ font-size:13.5px; font-weight:700; color:var(--dim); margin-bottom:10px; }
+  .why-label .req{ color:var(--warn); font-weight:800; }
+  .why-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .why-chip{ flex:1 1 44%; background:var(--card); border:2px solid var(--line); border-radius:12px;
+    padding:13px 10px; font-size:15.5px; font-weight:800; color:var(--txt); cursor:pointer;
+    transition:transform .06s, border-color .12s; }
+  .why-chip:active{ transform:scale(0.97); }
+  .why-chip.on{ border-color:var(--accent); color:var(--accent); background:#12432a; }
+  .why-etc{ width:100%; height:50px; margin-top:10px; border-radius:12px; background:var(--card);
+    border:2px solid var(--warn); color:var(--txt); font-size:16px; font-weight:700; padding:0 14px; }
+  .why-etc:focus{ outline:none; border-color:var(--accent); }
+  .why-hint{ font-size:13px; color:var(--warn); margin-top:9px; font-weight:600; }
   /* [v3.1] 오늘 발송분 불러오기 버튼 */
   .today-btn{ width:100%; background:var(--safe-bg); color:#bfe6ff; border:2px solid #2f5a6e;
     border-radius:14px; padding:15px 16px; margin:0 0 12px; font-size:16.5px; font-weight:800;
@@ -328,6 +349,11 @@ let quickInputs={};
 let quick=null;
 let TODAY_ORDERS=null;   // [v3.1] 스크립트 v4가 내려주는 오늘 발송분 집계
 let quickDeduct=true;    // [v3.2] ②에서 오늘 기출고를 뺄지 (기본 켬 · 화면에서 끌 수 있음)
+// [v3.3] QUICK 모드 — 'order'(주문 출고) | 'manual'(수동 출고=계산기)
+//   manual: 자동 채우기·기출고 차감을 걸지 않는다. 사유를 골라 기록 memo에 남긴다.
+let quickMode='order';
+const WHY_LIST=['서비스(맛보기)','샘플','내부사용','기타'];
+let whyPick='', whyEtc='';
 
 // ===== 작업자(출고관리자) =====
 // 시트 '작업자목록' B열에서 받아오기 전/실패 시 쓰는 기본 목록.
@@ -438,9 +464,17 @@ function renderProducts(){
       <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
     </div>`;
   // [v3] QUICK 출고 입구
-  h+=`<button class="quick-btn" onclick="goQuick()">
-      <span>⚡ QUICK 출고
-        <div class="qb-sub">주문 여러 건 → 5종 필요수량 자동 합산 → 순서대로 출고</div>
+  // [v3.3] 입구 2개 — 주문 출고 / 수동 출고
+  const ordN = (TODAY_ORDERS && TODAY_ORDERS.rows) ? TODAY_ORDERS.rows : 0;
+  h+=`<button class="quick-btn" onclick="goQuick('order')">
+      <span>⚡ 주문 출고
+        <div class="qb-sub">오늘 주문분${ordN?' '+ordN+'건':''} 자동으로 채우고, 이미 나간 건 빼줍니다</div>
+      </span>
+      <span class="qb-arrow">›</span>
+    </button>`;
+  h+=`<button class="quick-btn" style="background:linear-gradient(135deg,#123a43,#1f6d7d);border-color:#2f7f8f;" onclick="goQuick('manual')">
+      <span>🧮 수동 출고
+        <div class="qb-sub" style="color:#bfe4ec">서비스·샘플 등 주문 외 물량 — 수량을 직접 넣습니다</div>
       </span>
       <span class="qb-arrow">›</span>
     </button>`;
@@ -493,19 +527,47 @@ function breakdownLineO(byCode){
 }
 
 // ===== [v3] QUICK 출고 화면들 =====
-function goQuick(){ view='quick'; pushStep(); render(); }
+function goQuick(mode){
+  quickMode = (mode==='manual') ? 'manual' : 'order';
+  if(quickMode==='manual'){ quickInputs={}; whyPick=''; whyEtc=''; }
+  view='quick'; pushStep(); render();
+}
+// [v3.3] 기록 memo에 남길 사유 문자열. 주문 출고면 빈 값.
+function whyMemo(){
+  if(quickMode!=='manual' || !whyPick) return '';
+  const etc=(whyPick==='기타' && whyEtc.trim()) ? ' '+whyEtc.trim() : '';
+  return '['+whyPick+']'+etc;
+}
+function whyOk(){ return quickMode!=='manual' ? true : (!!whyPick && (whyPick!=='기타' || !!whyEtc.trim())); }
+function pickWhy(i){ whyPick=WHY_LIST[i]||''; render(); }
+function onWhyEtc(el){ whyEtc=el.value; const f=$('qsFooterBtn'); if(f) f.disabled=!whyOk(); }
 
 // ① 주문 수량 입력 화면 (구성표 상품명 목록 그대로)
 function renderQuick(){
-  $('title').textContent='⚡ QUICK 출고';
-  $('sub').textContent='① 주문 수량을 입력하세요';
+  $('title').textContent = quickMode==='manual' ? '🧮 수동 출고' : '⚡ 주문 출고';
+  $('sub').textContent = quickMode==='manual' ? '① 사유와 수량을 넣으세요' : '① 주문 수량을 입력하세요';
   let h='';
   if(!CALC.items.length){
     h+=`<div class="short-note">상품 목록(구성표)을 아직 못 받아왔어요.<br>인터넷 확인 후 아래 버튼을 누르세요.</div>
       <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>`;
     screen.innerHTML=h; footer.innerHTML=''; return;
   }
-  h+='<div class="hint">송장 보면서 <b style="color:var(--accent)">주문 들어온 상품만</b> 수량을 넣으세요. 안 온 상품은 비워두면 됩니다.</div>';
+  // [v3.3] 수동 출고 = 사유 먼저 고르고, 수량은 직접 넣는다 (자동 채우기·차감 없음)
+  if(quickMode==='manual'){
+    h+=`<div class="why-box ${whyOk()?'':'need'}">
+      <div class="why-label">왜 나가나요? <span class="req">*</span></div>
+      <div class="why-chips">` +
+      WHY_LIST.map((w,i)=>`<button class="why-chip ${whyPick===w?'on':''}" onclick="pickWhy(${i})">${w}</button>`).join('') +
+      `</div>` +
+      (whyPick==='기타'
+        ? `<input class="why-etc" placeholder="사유를 적어주세요" value="${whyEtc}" oninput="onWhyEtc(this)">` : '') +
+      (whyOk()?'':`<div class="why-hint">⚠ 사유를 골라야 출고할 수 있어요</div>`) +
+      `</div>`;
+    h+='<div class="hint">내보낼 수량을 <b style="color:var(--accent)">직접</b> 넣으세요. 주문분은 빼지 않습니다.</div>';
+  } else {
+    h+='<div class="hint">송장 보면서 <b style="color:var(--accent)">주문 들어온 상품만</b> 수량을 넣으세요. 안 온 상품은 비워두면 됩니다.</div>';
+  }
+  if(quickMode==='order'){
   // [v3.1] 오늘 발송분 자동 불러오기
   if(TODAY_ORDERS && TODAY_ORDERS.orders && Object.keys(TODAY_ORDERS.orders).length){
     h+=`<button class="today-btn" onclick="loadTodayOrders()">📥 오늘 발송분 자동으로 채우기 (주문 ${TODAY_ORDERS.rows||0}건)</button>`;
@@ -517,6 +579,7 @@ function renderQuick(){
   if(todayShipped>0){
     h+=`<div class="hint" style="margin-top:0;">ℹ 오늘 이미 일반출고 <b>${todayShipped}개</b> 기록이 있어요 — ② 필요수량에서 <b style="color:var(--accent)">자동으로 빼드립니다</b></div>`;
   }
+  }   /* [v3.3] quickMode==='order' 블록 끝 */
   CALC.items.forEach((it,i)=>{
     const v=quickInputs[it.name]||'';
     h+=`<div class="qrow ${(parseInt(v)||0)>0?'has':''}" id="qrow${i}">
@@ -571,6 +634,9 @@ function todayOutByCode(){
   if(!SHEET_TODAY) return m;
   RECENTS.forEach(r=>{
     if(!r || r.type!=='일반주문' || r.date!==SHEET_TODAY) return;
+    // [v3.3] 수동 출고(서비스·샘플 등)는 주문분이 아니다 → 차감에서 뺀다.
+    //   수동 출고는 memo에 '[사유]'가 붙는다. 주문 출고는 memo가 빈 값.
+    if(String(r.memo||'').trim().charAt(0)==='[') return;
     const q=Number(r.qty)||0;
     if(q>0 && m[r.code]!=null) m[r.code]+=q;
   });
@@ -579,7 +645,8 @@ function todayOutByCode(){
 // [v3.2] 주문 필요수량(raw) − 오늘 기출고(out) = 남은 필요수량(net)
 function computeNeedsNet(){
   const raw=computeNeeds();
-  const out=quickDeduct? todayOutByCode() : {};
+  // [v3.3] 수동 출고는 '주문 − 기출고'라는 개념 자체가 없다 → 차감하지 않는다.
+  const out=(quickDeduct && quickMode!=='manual') ? todayOutByCode() : {};
   const net={};
   PRODUCTS.forEach(p=>{ net[p.code]=Math.max(0,(raw[p.code]||0)-(out[p.code]||0)); });
   return {raw:raw, out:out, net:net};
@@ -595,16 +662,25 @@ function goQsum(){
 // ② 5종 필요수량 + 재고 사전점검 화면
 function renderQsum(){
   $('title').textContent='⚡ QUICK 출고';
+  $('title').textContent = quickMode==='manual' ? '🧮 수동 출고' : '⚡ 주문 출고';
   $('sub').textContent=quick?'진행 상황 — 남은 필요수량':'② 5종 필요수량 확인';
   // [v3.2] QUICK 진행 중이면 이미 차감된 remaining을 그대로 쓴다(두 번 빼지 않음).
   const nd = quick ? null : computeNeedsNet();
   const needs = quick ? quick.remaining : nd.net;
   const outTot = quick ? 0 : PRODUCTS.reduce((s2,p)=>s2+(nd.out[p.code]||0),0);
-  const hadOut = quick ? false : PRODUCTS.some(p=>todayOutByCode()[p.code]>0);
+  const hadOut = (quick || quickMode==='manual') ? false : PRODUCTS.some(p=>todayOutByCode()[p.code]>0);
   const shorts=[];
   let h='';
+  // [v3.3] 수동 출고 — 사유를 다시 보여준다(기록에 그대로 남는 값)
+  if(!quick && quickMode==='manual'){
+    h+=`<div class="quick-banner done">
+      <div class="qb-step">🧮 수동 출고 — 주문분 차감 없음</div>
+      <div class="qb-main">사유 <b>${whyMemo()||'(미선택)'}</b> 로 기록됩니다</div>
+    </div>`;
+  }
   // [v3.2] 차감 상태 배너
-  if(!quick && quickDeduct && outTot>0){
+  if(!quick && quickMode==='manual'){ /* 수동은 차감 배너 없음 */ }
+  else if(!quick && quickDeduct && outTot>0){
     h+=`<div class="quick-banner">
       <div class="qb-step">✓ 오늘 기출고 차감함</div>
       <div class="qb-main">오늘 이미 <b>${outTot}개</b> 나갔어요 — 아래는 <span style="color:var(--accent)">앞으로 뺄 물량</span>입니다</div>
@@ -634,15 +710,18 @@ function renderQsum(){
   screen.innerHTML=h;
   footer.innerHTML = quick
     ? `<button class="btn" onclick="quickResume()">계속 출고하기 →</button>`
-    : `<button class="btn" onclick="startQuick()">출고 시작 →</button>`;
+    : `<button class="btn" id="qsFooterBtn" ${whyOk()?'':'disabled'} onclick="startQuick()">출고 시작 →</button>`;
 }
 function startQuick(){
+  if(!whyOk()){ showToast('⚠ 사유를 먼저 고르세요'); return; }
   const nd=computeNeedsNet();          // [v3.2] 오늘 기출고를 뺀 '남은 필요수량'으로 시작
   const need=nd.net;
   const order=PRODUCTS.map(p=>p.code).filter(c=>need[c]>0);
   if(!order.length){
     const rawTot=PRODUCTS.reduce((s2,p)=>s2+(nd.raw[p.code]||0),0);
-    showToast(rawTot>0 ? '✓ 오늘 주문분은 이미 다 나갔어요<br>더 뺄 물량이 없습니다' : '⚠ 필요수량이 없습니다');
+    showToast(rawTot>0
+      ? '✓ 오늘 주문분은 이미 다 나갔어요<br><span style="font-size:15px">서비스·샘플이면 첫 화면의<br>🧮 수동 출고를 쓰세요</span>'
+      : '⚠ 필요수량이 없습니다');
     return;
   }
   quick={ need:Object.assign({},need), remaining:Object.assign({},need), order:order, idx:0, deducted:nd.out };
@@ -657,7 +736,7 @@ function quickResume(){
 function quickNext(){
   quick.idx++;
   if(quick.idx>=quick.order.length){
-    quick=null; quickInputs={};
+    quick=null; quickInputs={}; quickMode='order'; whyPick=''; whyEtc='';
     view='products'; curProduct=null; justOut={};
     render();
     showToast('⚡ QUICK 출고 완료!<br>수고하셨습니다');
@@ -808,7 +887,7 @@ function confirmOut(){
   //   { type:'normal', otype:'일반주문', manager, lines:[{lot,qty,loss?,memo}] }
   //   loss는 깨짐·불량이 있을 때만 음수로 보냄(시트 G열). H=E−G 수식이 실출고를 계산.
   //   C(현재재고)·D(상품코드)·H(실출고)는 시트의 자동 수식이 채우므로 보내지 않음.
-  const line={ lot:l.lot, qty:n, memo:'' };
+  const line={ lot:l.lot, qty:n, memo:whyMemo() };   // [v3.3] 수동 출고면 '[사유]' 기록
   if(loss>0) line.loss=-loss;          // 화면은 양수 입력 → 시트엔 음수로
   showToast(`전송 중…`);
   fetch(SHEET_URL,{
@@ -847,7 +926,7 @@ function stepBack(){
     else { view='products'; curProduct=null; justOut={}; }
   }
   else if(view==='qsum'){ view='quick'; }
-  else if(view==='quick'){ quick=null; view='products'; }
+  else if(view==='quick'){ quick=null; quickMode='order'; whyPick=''; whyEtc=''; view='products'; }
   render();
 }
 window.addEventListener('popstate', ()=>{ stepBack(); });
