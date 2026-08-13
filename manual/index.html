@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#26221c">
+<title>한결맛담 운영매뉴얼</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:"Noto Sans KR","Apple SD Gothic Neo",sans-serif; background:#f4f2ee; color:#26221c; line-height:1.55; }
+  .wrap { max-width:560px; margin:0 auto; padding:14px 12px 30px; }
+  .hd { background:#26221c; color:#fff; border-radius:14px; padding:16px 18px; margin-bottom:10px; }
+  .hd h1 { font-size:19px; font-weight:900; letter-spacing:-0.5px; }
+  .hd .sub { font-size:12px; color:#cfc8bc; margin-top:4px; }
+  .quick { background:#fff; border-radius:12px; padding:12px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.06); font-size:13px; }
+  .quick a { display:inline-block; background:#26221c; color:#fff; text-decoration:none; font-weight:700; font-size:12.5px; border-radius:9px; padding:7px 11px; margin:3px 3px 3px 0; }
+  .quick a.alt { background:#7a4d15; }
+  details { background:#fff; border-radius:12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.06); overflow:hidden; }
+  summary { list-style:none; cursor:pointer; font-size:14.5px; font-weight:900; padding:13px 15px; letter-spacing:-0.3px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::after { content:"▾"; float:right; color:#b3a893; }
+  details[open] summary::after { content:"▴"; }
+  .bd { padding:2px 15px 14px; font-size:13px; }
+  .row { display:flex; gap:8px; padding:6px 0; align-items:baseline; }
+  .row + .row { border-top:1px solid #f5f1ea; }
+  .when { flex:0 0 100px; font-weight:800; font-size:12px; color:#7a4d15; }
+  ul.t { list-style:none; }
+  ul.t li { padding:5px 0; }
+  ul.t li + li { border-top:1px solid #f5f1ea; }
+  b { font-weight:800; }
+  .muted { color:#8a8377; }
+  .warn { background:#fff7e8; border-left:4px solid #d99a2b; border-radius:6px; padding:7px 10px; font-size:12.5px; margin:8px 0 2px; }
+  .stop { background:#fbeaea; border-left:4px solid #b04a4a; border-radius:6px; padding:7px 10px; font-size:12.5px; margin:8px 0 2px; }
+  pre.copy { background:#f3efe8; border-radius:9px; padding:10px 12px; font-family:inherit; font-size:12.5px; white-space:pre-wrap; margin:7px 0; }
+  .chip { display:inline-block; background:#fbeaea; color:#8c2f2f; font-size:11.5px; font-weight:700; border-radius:8px; padding:3px 8px; margin:2.5px 2px 2.5px 0; }
+  .ft { text-align:center; font-size:11px; color:#8a8377; padding:14px 0 4px; line-height:1.7; }
+  h3 { font-size:12.5px; font-weight:900; color:#7a4d15; margin:10px 0 3px; }
+</style></head><body><div class="wrap">
+
+<div class="hd">
+  <h1>한결맛담 ERP 운영매뉴얼</h1>
+  <div class="sub"><b>v2 · 2026-08-12</b> · 값이 다르면 <b>현황판 최신판</b>이 정답 · 라이브 변경 시 이 페이지도 갱신(#171)</div>
+</div>
+
+<div class="quick">
+  <b>바로가기</b> —
+  <a href="https://junghoon2019-beep.github.io/erp/out/">⚡ 출고</a><a href="https://junghoon2019-beep.github.io/erp/gross/">🟪 그로스</a><a href="https://junghoon2019-beep.github.io/erp/repack/">🟨 소분</a><a href="https://junghoon2019-beep.github.io/erp/ship/">🚚 발송</a><a class="alt" href="https://junghoon2019-beep.github.io/erp/song.html">🧰 변환기</a>
+  <div style="margin-top:7px" class="muted">새 채팅 첫 마디: <b>"claude/ 폴더의 현황판 운영정본 최신판 보고 시작해."</b></div>
+</div>
+
+<details open>
+<summary>🔘 내 루틴 — 오늘 뭐 하지</summary>
+<div class="bd">
+  <div class="row"><div class="when">매일 수시 5분</div><div>마스터 <b>송장자동화_로그</b> 탭 — <b>성공 + 사유 빈칸 = 완료</b> · 발송취합 · ROAS 눈도장(조정 ✗)</div></div>
+  <div class="row"><div class="when">매주 월</div><div>정산 3종 다운(70%만) → [가져오기] → <b>[② 정산 반영]</b></div></div>
+  <div class="row"><div class="when">매월 15일경</div><div>전월 광고 굽기 + A/B/C 판정 채팅</div></div>
+  <div class="row"><div class="when">매월 말~월초</div><div><b>월별집계 인원 세기</b> — 빠진 사람 = 미지급 사고</div></div>
+  <div class="row"><div class="when">매월 21일</div><div><b>급여 안내</b> (아래 카드)</div></div>
+  <h3>자동으로 도는 것 (손 안 댐)</h3>
+  <div class="row"><div class="when">06:00</div><div>옵션갱신 — 지난 발송일 옵션 숨김</div></div>
+  <div class="row"><div class="when">매시 :00·:15·:30</div><div>매출 수집 3종</div></div>
+  <div class="row"><div class="when">08~17시 :05</div><div>우체국쇼핑 투입함</div></div>
+  <div class="row"><div class="when">09~16시 :05</div><div>송장잡 — 접수·채번·역등록 + 발송취합 갱신</div></div>
+  <div class="row"><div class="when">평일 08:30</div><div>근태 서버 알림</div></div>
+</div>
+</details>
+
+<details>
+<summary>📦 주문 → 송장 — 채널별 내가 할 일</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>스스 · 쿠팡판배 · 카페24 · 카카오선물:</b> 완전 자동 — <b>포장·발송만.</b> 카페24는 발주확인까지 무인</li>
+    <li><b>스스 발송일 옵션 주문:</b> 자동. 잡이 그 날짜에 접수 + 발송지연 자동 신고. 로그의 <span class="muted">발송일대기</span> = 정상</li>
+    <li><b>우체국쇼핑:</b> ① 어드민 발주확인(미통보건 통보) + 주문 엑셀 다운 ② 드라이브 <b>우체국쇼핑_투입함</b> 폴더에 넣기 ③ 온 메일의 첨부 .xls를 어드민 송장업로드에 <b>받은 그대로</b> 올리기 (재저장 ✗)</li>
+    <li><b>퀵 · 방문수령:</b> 라벨(우체국 접수)은 자동 발급. 채널 역등록은 안 함 — 안내·CS 수동. 안 쓴 라벨 = 집화 전이면 요금 없음, 폐기</li>
+    <li><b>SSG · 72h 밖 · 다중박스 · API 실패 건:</b> 변환기 song.html 수동</li>
+  </ul>
+  <div class="warn">취소가 필요하면 → 클로드 채팅으로 (reqNo/resNo `--삭제`).</div>
+</div>
+</details>
+
+<details>
+<summary>🏭 에너지바 — 출고·소분·발송 (폰앱 4종)</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>⚡ 일반출고 out — 입구 2개.</b> [⚡ 주문 출고] = 오늘 주문분 자동 채우기 + 기출고 차감. [🧮 수동 출고] = 서비스·샘플·내부사용 등 주문 외 — <b>사유 필수 · 차감 없음</b></li>
+    <li>주문 출고에서 "이미 다 나갔어요"가 뜨면 → 서비스·샘플 건은 <b>수동 출고</b>로</li>
+    <li><b>🟪 그로스출고:</b> 유통기한 임박 LOT 선입선출로 5종 MIX 자동 추천 (1박스 = 12세트)</li>
+    <li><b>🟨 소분검수:</b> 통과 = 기록 없음. <b>부족일 때만</b> 한 줄</li>
+    <li><b>🚚 발송:</b> 오늘 발송분·방문퀵·예약분 확인 — 5분 자동 갱신. 빨간 띠 = 갱신 실패(마지막 내용 유지)</li>
+    <li><b>로스(파손):</b> 화면에 그냥 양수로 입력</li>
+  </ul>
+  <div class="warn">화면은 스냅샷 — 작업 전 새로고침. 재고 궁금하면 시트 <b>재고대시보드</b> 탭.</div>
+  <div class="stop">시트 수식 열 직접 입력 ✗ · 테스트 흔적은 "내용 지우기" 말고 <b>행 삭제</b> · memo의 [ ] 지우기 ✗ (차감 오염)</div>
+</div>
+</details>
+
+<details>
+<summary>💰 급여 안내 — 매월 21일 (정본: 급여안내_서식_v2)</summary>
+<div class="bd">
+  <ul class="t">
+    <li>① 월 마감 전: <b>월별집계 인원 세기</b> — 휴직(정은주 · 자율형이라 어디에도 안 뜸)·일급직 무업무는 안 뜨는 게 정상</li>
+    <li>② <b>(운영)근태 → 월별집계 탭</b>에서 1인 1줄 캡처 — <b>급여반영(h) 열 포함</b></li>
+    <li>③ 개인 카톡 전송:</li>
+  </ul>
+  <pre class="copy">안녕하세요~
+금월 지급 될 급여 정보입니다
+근무시간, 급여 확인 부탁드립니다 :)
+
+혹시 다른 부분이 있으면 (지급일+7일)까지 알려주세요.
+말씀 없으시면 그대로 지급됩니다 :)</pre>
+  <ul class="t">
+    <li>④ 일급직(서동필·나보영)은 "근무시간" → <b>"근무하신 날짜 수"</b></li>
+    <li>⑤ 세무사 전달(8월분 1회): "시스템 바뀌어 이름 뒤 26이 빠졌습니다. 같은 사람입니다."</li>
+  </ul>
+  <div class="stop">⛔ 캡처는 <b>월별집계에서만.</b> 💼근무/급여 시트 캡처 금지 — 바로 옆이 주민번호 열.</div>
+</div>
+</details>
+
+<details>
+<summary>⏰ 근태 — 정정·휴무·연장 (상세: 시트 안 사용설명서 탭)</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>평소 = 할 일 없음.</b> 직원이 키오스크로 출퇴근. 알림 오면만 처리</li>
+    <li><b>연장을 지시했으면 → 지시연장 탭에 입력.</b> 입력 없는 연장 = 미지급</li>
+    <li><b>기록 이상</b> → 관리 페이지 → 날짜 → [＋ 기록 추가](추정 + 사유) → 본인 확인</li>
+    <li><b>무기록일 점검</b>에 뜬 날이 실제 휴무면 → [휴무로 확인](사유 한 줄 필수). 되돌리기 = 보정대기 탭 그 줄 삭제</li>
+    <li>급여 원칙: 기본급 = 소정근로시간 고정 · 일급직 = 하루 일당</li>
+  </ul>
+  <div class="stop">⛔ <b>기록 탭 직접 수정 금지</b>(append-only) — 정정은 반드시 관리 페이지로. 근태는 <b>개발 종료</b> — 코드 다시 열지 않는다.</div>
+</div>
+</details>
+
+<details>
+<summary>📊 정산(매주 월) · 광고 굽기(매월 15일경)</summary>
+<div class="bd">
+  <h3>매주 월 — 정산 반영 (5~10분)</h3>
+  <ul class="t">
+    <li>① WING > 정산 > 로켓그로스 정산현황 > 상세 → 3종 다운 — <b>기준일 = 매출인식일 · 70% 파일만</b></li>
+    <li>② (운영)정산 [파일 > 가져오기 > 업로드] — <b>복붙 절대 금지</b></li>
+    <li>③ 메뉴 [정산] > <b>② 정산 반영</b> → 커버리지 상승 확인</li>
+  </ul>
+  <h3>매월 15일경 — 전월 광고 굽기 (10분 + 채팅)</h3>
+  <ul class="t">
+    <li>① 상품 전환 보고서(전월) 다운 → ② 가져오기(새 시트) → ③ 원본붙여넣기_광고 A5 + 상단 4칸 → ④ [② 굽기] → ⑤ 정산보고서 최종청구금액 → E5 → [③ 새로고침] (미배분 ≈ 0 확인) → ⑥ [④ 검산] ✅✅ → ⑦ A/B/C는 클로드 채팅</li>
+    <li>판단은 언제나 <b>광고후실손익(확정)</b> — ROAS·잠정치는 함정</li>
+  </ul>
+</div>
+</details>
+
+<details>
+<summary>🆕 신상품 · 새 리스팅 등록</summary>
+<div class="bd">
+  <ul class="t">
+    <li>① 마스터 해당 채널 탭 → 새 줄에 <b>C 짧은이름 / D 종류 / E 단가표상품명</b> 3칸 → F 원가 자동</li>
+    <li>E는 <b>반드시 ▼ 드롭다운</b> — 직접 타이핑 ✗. 추가옵션은 E·F 비움</li>
+    <li>우체국쇼핑 <b>스킵_미매핑</b> → 우체국쇼핑 탭 1줄 추가 후 파일 재투입</li>
+    <li>미매핑 경보(광고 팝업 신상품 · E5 미배분 급증) → 1줄 추가 후 [다시 굽기]</li>
+  </ul>
+</div>
+</details>
+
+<details>
+<summary>🚨 이상할 때 — 증상별 첫 확인처</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>송장 이상</b> → 로그 탭 → 실패 건만 변환기 폴백 + 캡처 들고 클로드</li>
+    <li><b>매출 안 들어옴</b> → 클로드에 확인 요청 (0건 종료 = 정상)</li>
+    <li><b>발송취합 안 갱신</b> → 탭 헤더 갱신 시각 — 잡 러닝(매시 :05) 전이면 정상</li>
+    <li><b>우체국쇼핑 메일 안 옴</b> → 로그 확인 — 접수·장부는 안전, 다음 런에 재발송</li>
+    <li><b>근태 알림</b> → 관리 페이지에서 정정·휴무확인</li>
+    <li><b>시트 숫자 이상</b> → <b>직접 수정 ✗</b> — 캡처 들고 클로드</li>
+    <li><b>화면이 옛날</b> → 새로고침 / Ctrl+F5 / 앱 껐다 켜기</li>
+  </ul>
+</div>
+</details>
+
+<details>
+<summary>🗺️ 시스템 전체 지도 (한 표)</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>(운영)매출</b> 🤖 — 주문 자동 수집·원가 굽기. 손 안 댐</li>
+    <li><b>(운영)정산</b> 🔘 — 쿠팡 확정 실마진 층. 매주 월</li>
+    <li><b>(운영)단가표</b> 🤖 — 원가 엔진. 시세는 직원 유지</li>
+    <li><b>(운영)상품코드 마스터</b> 🔘 — 번역표 + 송장 매핑 + <b>로그·발송취합 탭</b></li>
+    <li><b>(운영)광고분석</b> 🔘 — 로켓 광고 진짜 손익. 매월 15일경</li>
+    <li><b>(운영)근태</b> 🔘 — 출퇴근 원장 + 키오스크·관리 페이지. 개발 종료</li>
+    <li><b>에너지바 재고 시트</b> 🤖 — LOT 원장. 폰앱이 기록</li>
+    <li><b>폰앱 4종</b> 🔘 — out · gross · repack · ship (상단 바로가기)</li>
+    <li><b>송장변환기</b> 🧰 — 수동 폴백</li>
+    <li><b>NCP 서버</b> 🤖 — 수집 3종 · 송장잡 v1.16.1 · 옵션갱신 · 근태 알림. 확인은 로그 탭으로만</li>
+    <li><b>우체국쇼핑 투입함</b> 🤖 — 드라이브 폴더 반자동</li>
+    <li><b>카카오쇼핑 API</b> 🤖 — 계약 ~2027.07.14</li>
+  </ul>
+</div>
+</details>
+
+<details>
+<summary>📅 데드라인 (1회성)</summary>
+<div class="bd">
+  <ul class="t">
+    <li><b>2026-09-21:</b> 첫 정산 — 인원 세기 + 캡처 전송 + 세무사 `26` 첨언</li>
+    <li><b>2026-11-26~12-09:</b> 스스 커머스API 재인증 — 놓치면 수집·역등록 정지</li>
+    <li><b>~2027-01-31:</b> 로켓그로스 입출고비 단가표 유효기간</li>
+    <li><b>2027-06-01:</b> 카카오 재계약 의사 통보 (폰 알림 설정됨)</li>
+  </ul>
+</div>
+</details>
+
+<details>
+<summary>⛔ 금지 18 (한 눈)</summary>
+<div class="bd" style="padding-top:8px">
+  <span class="chip">ROAS 2주 내 재수정</span><span class="chip">로켓 판매가 인하</span><span class="chip">엑셀 직접 복붙</span><span class="chip">카카오 대행사 정보</span><span class="chip">마스터 탭·행 삭제</span><span class="chip">단가표 onOpen 덮어쓰기</span><span class="chip">레거시·UNION 탭 삭제</span><span class="chip">미러 탭 수정</span><span class="chip">변환기 CSV 재저장</span><span class="chip">시트 직접 수정</span><span class="chip">번역표 E 직접 타이핑</span><span class="chip">키·시크릿 채팅 붙여넣기</span><span class="chip">우체국쇼핑 폴더·공유 삭제</span><span class="chip">근태 기록 탭 직접 수정</span><span class="chip">💼근무/급여에서 급여 캡처</span><span class="chip">옵션 재활성화 때 재고 999 잊기</span><span class="chip">수동출고 memo [ ] 지우기</span><span class="chip">정상 판매 상품에 예약판매 켜기</span>
+</div>
+</details>
+
+<div class="ft">정본: 클로드 프로젝트 <b>claude/한결맛담_운영매뉴얼_v2.md</b> · 최신 사실 = 현황판 최신판<br>이 페이지는 라이브 변경 세션마다 클로드가 재생성 → GitHub 업로드로 갱신 (#171)</div>
+
+</div></body></html>
