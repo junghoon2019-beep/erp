@@ -18,7 +18,23 @@
      v3.3 (2026-08-11): QUICK 입구를 [주문 출고] / [수동 출고] 둘로 분리.
      수동 출고 = 원래 설계 v1의 '출고수량계산기' — 서비스·샘플 등 주문 외 물량.
      자동 채우기·기출고 차감을 걸지 않고, 사유를 골라 memo에 남긴다.
-     차감 계산은 memo가 붙은(=주문 외) 기록을 제외한다 → 서비스 출고가 주문 차감을 오염시키지 않는다. -->
+     차감 계산은 memo가 붙은(=주문 외) 기록을 제외한다 → 서비스 출고가 주문 차감을 오염시키지 않는다.
+     v3.4 (2026-08-22): "오늘 발송분" → "미출고 주문분" 개편.
+     ① 창을 오늘 하루 → 최근 10일로 넓힘. 스크립트 v4.1+ 의 recentOrders를 쓴다.
+        연휴에 밀린 주문이 화면에서 통째로 사라지던 문제(8/18 실측) 해결.
+        구버전 스크립트(v4)에 붙어도 죽지 않게, recentOrders가 없으면 todayOrders로 자동 후퇴.
+     ② 차감도 같은 창으로. '오늘 기출고'만 빼던 것을 '창 안 기출고' 전체로 넓혀 대칭을 맞춤.
+        (주문 창과 차감 창이 다르면 이미 나간 물량을 또 내보내게 된다.)
+     ③ '주문 N개 − 기출고 M개'를 항상 표시. 창 경계 오차를 사람이 눈으로 잡게 하는 장치.
+     ④ 빈 상태 문구 4종 신설. 종전에는 주문이 0이면 버튼이 그냥 사라져 고장과 구분이 안 됐다.
+        못 받아옴 / 오류 / 발송은 있으나 에너지바 없음 / 주문 자체 없음 을 각각 다르게 표시.
+     v3.4.1 (2026-08-22): 속도 체감 문제 대응.
+     ⑤ 스톱워치 내장 — '재고 새로고침' 후 총/통신/서버/화면 시간을 실제 숫자로 표시.
+        서버 시간만 재고 끝냈던 것이 잘못이었다. 대표 체감 3초(스톱워치 실측)와 서버 1.45초의
+        차이가 어디서 나는지 앱이 직접 재게 한다. SHOW_TIMING=false 로 언제든 끌 수 있다.
+     ⑥ 완료 후 버튼 붙들기 1.5초 → 0.6초. 데이터는 이미 왔는데 기다리는 것처럼 보였다. -->
+
+<!-- ※ 이 앱은 출고 "기록" 방식(doPost)을 바꾸지 않는다. 읽고 보여주는 쪽만 바뀐다. -->
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoi7JeQ64SI7KeA67CUIOy2nOqzoCAoT1VUKSIsInNob3J0X25hbWUiOiLstpzqs6AgT1VUIiwic3RhcnRfdXJsIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8iLCJzY29wZSI6Imh0dHBzOi8vanVuZ2hvb24yMDE5LWJlZXAuZ2l0aHViLmlvL2VycC9vdXQvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJvcmllbnRhdGlvbiI6InBvcnRyYWl0IiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjFiMTQiLCJ0aGVtZV9jb2xvciI6IiMwZjFiMTQiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQ0FJQUFBQjdHa090QUFBV1FrbEVRVlI0MnUzZGUzaFY1WUhvNGIxenYwQUlJZUV1QVFGSmtLdUExZ3ZWUTBIc0dSeEwxZEY2ZHh5bm83WWRQYlh0ZVJ4OVBMVmpXM3R4K3ZUWU1sYmwxTEd0dGxwYlFiQmd4UUlpUlJFVkNQZHJ1RVFnaEV0SXlHVW4rL3d4ZldaNnpuU2N5dnFTblUzZTl6OGZ5YmUvOWEyVi9jdmVlNjIxNCtWUFhSTURvUHZKc0FRQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFmMXFXSlRqOVpHZGtqZXA5eHRDaS9vTjZsQTRzTEIzWW83Ui9RZS9DN0x6OHJOeThySnk4ekp6Y3pKeVc5dGFUaWVhbVJHdFRvcmt4MFh5ZzhjaitodHA5SjJyM045UlcxeC9jZUhoM1UxdUxsUVFCSUEyVTVSZFBIVFIyZk9tSUNXWERLMHZLY3pLelAvemY1MlhtNUdYbXhITC84SjluOXhuNngvODMwZDYyNWVpZTl3NXRYM3RvK3h2NzErMDljY2dLdytrblh2N1VOVlloZlEzck5XRG1rQ21YbGsrZTJIZGtQQmJ2b0VmWldMZDcwZTYzRis5ZXZhRnVWd28zdGlTdjU1cnJub2c0eUcydmZ1dTFQV3M2WW5wenB0M3p5YUhuUlJsaHlaNTMvL3JWUno3a0g5dzhldVpYUDNacjl6bTg1NnlkOThqcW4vazE5d3FBLzNlM1pXVE9HbmIrcmFNdkcxODJvaE1lcnJLa3ZMS2svTzZKVjIwN3V1L0hHMzd6NHJabGpZbG1ld0VFZ0U1Vm5OdmpsdEdYWFY4eHZTeS91UE1mZlVUeG9IKzg0TFl2VDc3MjUxdGVuMXUxc0thaHpoNEJBYUF6L3VxL3NXTEczMCs4cWppM1IycG5VcFJUZVB1WVdUZFV6SGg4M2Z6SDE4MC82ZFVBQ0FBZFo5b1pFKzgvOThZemV3M3NPbFBLejhxOWUrSlYxNDZhOXEzVno3NjRiYmw5QkFKQStPZlpCejkyODdWblRldWEwK3RmVVBMb3grLzY1TkR6dnJ6ODhTUE45ZllYcEJFWGduVnBsU1hsTDEveGpTNzc3UDl2Wmd5Wi9NcnNSODdyUDlvdUF3RWdnTm5EcDc1MCtUOE83MHB2KzN6NFM0Rm5QL25BMzQ2ZFpjZUJBQkRKYldmLzkwY3Z2dk8vdko2cmF4MU04Zmg5VTI2NGI4b05IWGRGQWhDUXp3QzZvcTlNL3N3ZDQ2NUkwOG4vN2RoWmZmSjZmbVhGanhMdGJYWWxlQVhBUjNEZmxCdlM5OW4vWDEwNTh1THZUcjNUNndBUUFENkNtMGZQUEQzZVJyOWkrSVZmbm55dEhRb0N3Si9sMHZJcEQ1NTN5Mm16T1hlTXUrTDZpaGwyS3dnQS80VlJ2Yy80L2lXZno0aWZWbStiUEhUK3JSOGI0TnhRNktKOENOd2xaR2RrZmUvaXorVmw1blRFNEp1T1ZDL2Z0M1pqM2U3dHgycHFHbW9iV3B1YkVzMTVXVG1GMlhsbCtjWERldzJxNkgzR2hZUEdqdTF6WnZEOFpNWXpIcDE2NTh4ZmY3bStwZEZlQmdIZ1Q3aDMwaldWSmVWaHg2dzllZXk1TFV0K3R2bTEvU2RxLytQL2JXaHRhbWh0T3RoNHRPcndybm14V095ZDUwcnlpcTRlZWZIMUZUT0c5T3diY0JvRGU1UStkUDZ0OXl6OWdiME1Bc0QvNzl4K0ZiZVBDZm5CYjJPaStmRzE4eDVmTi84amZhdFhYZFB4eDlmTmYzTDlndXNxcHQ4ejhlcVN2SjZoNWpONytOUlhkNjlldUd1VmZRMEN3TCtMeCtMLzYveGJBcjczc3E1MngxMnZmNis2L3VDcC9YaGJzdjJaallzWDdGejU2TWZ2dW1Ud2hGQ3pldUM4bTE3YnM2YTVyZFVlaitMcERZdWUzckFvK0xCZnYrQnZycXVZSG1XRTFRYzJYN1hnUVRzbzdmZ1FPTVZtajdob2RNblFVS1A5YXZ2eUt4YzhlTXJQL24vMGFxRCsxc1dQL08vM1hndzFzUUdGZlc0WmZabmREUUxBSCtSa1puL3huR0JmeWZuY2xpVmZYUGJEbGtCL1pTZGp5ZSt1K1VYQUwrUzdhL3luVXY1TkJvQUFkQlUzVkV3ZjFLTTB5RkMvclg3bnZoVlB0Q2VUWVdjNForMjhwNm9XQmhtcUtLZndzMlAvMGs0SEFTQVdqOFZ2cXB3WlpLanR4L2IvL2RMSGdqLzcvNnV2di9XVDVmdldCUm5xTTZPbTVhYlY3ZTFBQU9nUVV3ZU5HMXJVUC9vNGJjbjIvN0hzaHcydEp6dG9ubTNKOWk4dG54UGtSUDdpM0I2enpyekFyZ2NCNk81dXJMdzB5RGh6cXhhK2YyaGJoMDcxZzhhNmI3ejkweUJEM2VUbUVDQUEzVnkvZ3Q3VHpwZ1lmWnhqelEzZkQzZXV6b2Q0YnN1U3JVZjNSaDluZk5tSWdHYzlBUUtRZnFZUG1ad1pEN0Q0VDZ4L3VYUHVzdENlVEg3djNSZUNESFZwK1dRSEFBaEFkdzdBT2RFSGFXcHIrWmVOaXp0dHpndDNyb3AraFVFc0ZwcytaSklEQUFTZ204clB5cjFnd0pqbzR5ellzZko0UzBPblRUc1pTLzU4eTVMbzQ0enBNNngvUVluREFBU2dPN3BvNEpnZ1owUCtmTXZyblR6ejU3ZitMc2pKcGtFKy93QUVJUDFNNlZjWmZaQzZwdnJWQnpkMzhzd1BOaDROY3NiUjVINFZEZ01RZ081b1hPbVowUWQ1ZmMrYURycnk2OE85dXVlZExySUNnQUNrbVhnc2ZuYWZvZEhIZVdQLytwVE0vNDE5YTZNUGNtYXZnWVhaZVE0R0VJRHVaV2l2L2oxekNxS1A4KzZoclNtWi80YTYzZEh2NnB3Umo1L3RhZ0FRZ081bWRJaHYvanJTWEwvcitBY3BtWCtpdlczOTRaMEIxaUhFeXlCQUFOTEo0QjVsMFFmWlhMY25oWnV3K1VpQVJ3OTFHMVJBQU5MR2dNSSswUWZaZWJ3bWhadXdLOFNqQjFrSFFBRFN5Y0QwRDhET1l6VmRaQjBBQWVoMnJ3QnFHdXBTdUFsQkhuMUFvYmVBUUFDNm1iNEZ2YU1QVXRkMFBJV2JjRGpFby9jdEtIWXdnQUIwTHdWWnVWM2tLVGkxK2NtTVoyUm5aRGtlUUFDNmtieXNuT2lEZE00dG9QOHp6VzJ0UWI1NlBzaFNBQUtRSnNzZGp3ZjVzN2VsTFpIYURXbHREekNCdkV3QkFBSG9Qbi8rQjNyS0MvTDhHKzFGUUlBSjVIc0ZBQUxRZmVTRXVBdDBMQlpyYlc5TDdZWWtRa3dnMUdvQUFwQUdncngxSG92RnNqTXlVN3NoV1NFbUVHbzFBQUZJQTAxdExZRUNrT0x6WjNJeXM3ck9hZ0FDa0FiYWs4a2diOTluWjZZNkFDRUsxSlR3Q2dBRW9GdTlDRWdFK0xPM0tMc2doWnVRazVrZDVPMzdrNGxteHdNSVFEZHlNa1FBU3ZKNnBuQVQrb1I0OUxaa2U4clBaUUlCb0ZNZE9uazB3Rk53ZnErVUJxQlhGMWtIUUFEU3lmNkd3OUVINlY5UWtzSk42RjhZNE5GclRoeDJNSUFBZExNQW5LaU5Qc2l3WGdOU3VBbkRpZ0k4ZXBBUUFnS1FUbXBDUFBFTksrcWYwZ0QwVDhrNkpOcmJBeHp4OFhoSC9TN0ZvLzQySlh3b2dnQ2MzdmFlT0JSOWtGRzl6MGpoSnB3VjR0SDNmZlIxQ0hMaFdGYUhYVUlSL2RxSVpsZkdJUUNudDQxMXU2TVBVcEpYVk42elgwcm1uNVdST2FaMFdQUnhOdFJWcCtUNXNlT3VvWXMrc2dBZ0FLZTVIY2RxR2xwUFJoOW5ZdCtSS1psL1pVbDU5RnZhSldQSjlZZDNuc0pQUlQ5enRDaW5veTZoS01vcGpCd0FsMFlqQUtlMVpDeFpkWGhYOUhFdUhEZ21KZk8vYU9EWTZJUHNQTlVLTnJaR3ZYYXNWMjVoQjYxTTlKR0RYQ01DQXRDbHJhM2RFWDJRYVdlYzAzR2ZaMzZJR1VNbXBYQUZhcHVPUlh6b3Z2bTlPMmhseXZLTEk0N2cyZ2dFNFBUMzlvRk4wUWZwazFjMHFlK29UcDU1YVg2dkNXVUIzbnBhZldEenFmM2dnY1lqRVI5NmNNK3lqbGlaa3J5aTZGLzJHWDNyUUFDNnVqZjJyd3R5UXN0Zm5YVkpKOC84NnBHWEJIblo4ZHFlTmFmNkZGa1g4YUU3NkF6YW9TR0dGUUFFNFBUWDBOcTBzbVpEOUhGbURUdS9SM1orcDAwN0hvdGZPMnBhOUhFMjFPMDY1WXNoUG1pSUdvQ2hSUU9pLzZuK0g0MHVLWTgreUFlUjh3WUNrQVordStlZDZJUGtaK1hlV0hscHA4MTU1dEFwUWM0OS9XMzFtbFArMlczSDlrYzk0dVB4c2FYRGd5L094TElSRVVkb2FXdmRVMy9RcndZQzBBMENVTDI2UFptTVBzNW54MTdlT1M4Q011THhleVplSFdTb1JidmZPdVdmM1hnNHdGVVVGM1hBQ1ZRWERvcDZjdFRXby9zU3FmNm1Ud1NBemxEVFVQZjYzbmVqajFPYzIrTnpFMlozd29TdkhubEprTXVQMTlidWlISVc3TmFqZTZNL1M4NHNQemZzNG93dkhSNzk5bndiNm5iNXZVQUF1b3RuTmk0T01zN3RZMmFOTFQyelE2ZmF0NkQ0SDg2OW9TdHNkV3Q3WXV2UnZSSG5jRmJ2d2VPQ3J0aFZJeStPUHNpR0VGZUhnQUNraDJYNzNxOE84WjV2Wmp6ajBZL2ZXWmlkMTFHSFNEeis3WXZ1aUg2WmF5d1dPOWJjTUgvSG14RUhXVmxURlgwbWZ6ZnVpbERyVTVyZjYrb1FwMk1GT1M4QUJDQTl0Q2VUVDIvNFRaQ2hSaFlQL3FlUDN4V1BkY2gxWVYrWmZOM0ZnOGNIR2VxNUxVdWlmeEg4MG4zdlI1L0pKNGVlTzdsZm1Lc283cDEwVGZSN1l4eG9QTExwU0xWZkNnU2dHL25KcGxkckF0MFcvOUx5S1E5ZmNGdndCdHcrWnRabngxNGVaS2o2bHNaL1hqc3YramlyYWpaR3YybGFQQmIvenRRN290KzhZZnFRU2RlZUZlRFUyR1VocWdZQ2tFNmEyMXEvcytZWG9VYTdybUw2ZDZiK1hhaTdYY1pqOGJzblhoWHFyZjlZTFBiRHRTOGRhYTZQUGs1VFc4dnlmV3VqanpPMHFQK1QwNzhVNVJ5cWMvdFhmditTTHdSWm5GZXIzL0hyZ0FCME83L2F0bXhUWGJEWC9sZU92UGlGV1Y4ZDNDUHEzUTZLYzNzOE9lTkxkMCs4S3RURWFocnEvay9WSzZGR2UzN3I3NEtNTTZWZnhZdXp2bGI1MGEvaGlzZmlOMVZlK3RQTC9pSElOV1dIbTQ0djJiUEc3d0lDME8yMEo1TVAvdjdIeVZneTFJRGpTNGN2bXYzdHo0MmZmV3B2VEdmR002NnJtTDdreWtjL2NjWTVBVGZ6NGJlZWFRcDNyK1BYOXF5cFBYa3N5RkJuOVI0OC95Ky8vdkFGdC8yWnQ0aklqR2ZNR0RMcDE1ZC83YUh6L3pyVWk2MFh0aTUxQlFBcGtXVUpVbTdWQnh1ZVdyL3diOGI4UmFnQkM3UHo3cDEwemMyalp6NjdlY216bTEvN016OW1LTW5yZWVXSWk2K3ZtRDQwOU4xeTV1MVk4ZkxPbFFFSFRMUzNQYi8xZDNjRU9wTW5LeVB6K29vWjExZk1lTDkyK3h2NzFyMTNhRnQxL1lFUEd1c2FXNXZia20yNW1UbTljZ29IOWlnOXEzandPWDFIZm1MSXBENTVSUUczSlJsTFByZGxpZDhDQktENyt0WTd6MTAwYUd4Rjd5RUJ4eXpMTC83Q2hFOS9mc0xzVFhYVnkvZXQyMUMzYThleC9UVU5kWTJKcHBPSjVyek1uSUxzdkxMODR1RzlCbGFVRExsbzROaHhwY003NHY3U05RMTE5Nzg1Ti9pd1Q2eGZjRlBsekxBbnY0NHZIVDYrQSs0UzhlSG03M2h6NTdFYXZ3SUlRUGZWMHRaNjk5TEhYcnI4NGR6TTdMQWp4MlB4eXBMeXloQzNLanNGN2Nua0Y1Zjk0SGhMUS9DUjY1cU96NjFhK1BrSm4wN3IvWjVvYjN0MHpmT09mMUxGWndCZHhhYTY2bnVXUGhia0JrRmR4MWRYL2ZqTkVOZHQvVWsvV3Y5eVhWTjlXcS9QejdjczJYWDhBd2MvQWtCczRhNVZENy8xekdtek9UOWE5L0xUR3haMTNQajFMWTBQckh3cWZkZW5wdUh3TjFjLzY3QkhBUGlEcDZvV3pxMWFlQnBzeU1zN1YzN2o3WjkyOUtNczJQbjdlVHRXcE9QNkpHUEpMeTc3WVgxTG8yTWVBZURmZlczVk0wK3Nmem10TitIWDI5KzRlK2xqQWM5dC9SQVBySnk3dS81QTJpM1I0K3ZtZDl5Yll5QUE2U29aU3o3ODFrKysrZmJQMG5UK2M2c1czclAwQjUxMll2dXg1b2FiRjMyanJ1bDRlcjA4ZXVSdGIvNGdBUHduL25uZHZIdVh6Mmx0VDZUUm5OdVR5VWRXUC92UXFuL3BuTC85LzgydTR4L2N1dmlSeGtSeldxelN5cHFxZTViK29KT1hDQVFnemJ5d2RlbnMrUStreTBuaUJ4dVAzcmpvNFRsclgwckpvNzlmdS8zYWhWOE5kWGx3eDFtMCsrMWJGeitTWGwxSEFFaU45WWQzL3NWTC8vT0ZyVXU3K0R4ZjI3UG1zbDkvYWNYKzlTbWN3OXJhSForYWYvKzJvL3U2N0NyTnJYcmxqaVdQQnJ3bEJnakFhYTR4MFh6djhqbTMvL2JiWGZPRThZT05SKzlkUHVlMlY3L1ZGVTdKMzN2aTBCWHo3Ly9aNXRlNjJpclZOZFhmOWZyM0hscjE5R2wyblFmcHpwWEE2ZUhWNm5kZTMvdmVMYU12KzhLRVR3ZjVjcTdvbXRwYW5seS9ZTTdhbHhwYW03ck9RalcwbnJ4dnhST3Y3UHI5TnkvODdLQWVwVjFoU3Evc1duWC9tMDhkVHF1UHFSRUF1cFpFZTl1VDZ4ZjhjdXV5Vzg2KzdQcFIwMHZ6ZTZWcUp2VXRqYzl2L2QwVDZ4ZUUramFiNEpidlcvZmZmbm5QRFJYVDd4ejNxUlF1MU1xYXF1K3UrY1hxQTVzZHZRZ0FBUnhwcnYrbk5jOC85dDZ2TGovei9KdEhYOWJKTnkvYmZtei8weHQrODh0dHk3clVYLzEvVWt0YjY5eXFWNTdkdk9Rem96N3htVkhUUmhZUDdzeFVMOW16WnU2R1YzN3ZhMzRSQUlKcmJVKzh1RzM1aTl1V245bHI0TXp5S1RQTHA0d3ZHOTVCM3drY2k4VTJIYWxldkh2MTR0MXZyeis4TTcwVzZtU2llVzdWd3JsVkN5ZVVqZmlya1pkTUh6SzViMEZ4QnoxV2V6SzUvdkRPZVR0V3ZMaHRlWjAzZkVnSDhmS25yckVLcDRGK0JiMHZHalJ1UXVudzhXVWpLa3VHUlB5dWtyWmsrOVlqZTkrcjNmYitvZTByOXErcnJqOTQyaXhVUmU4aFV3ZU51MkRnMldQNkRDdkxqeHFEUkh2YmptTTE3eDdhdW56ZjJoWDcxd2Y1emtzUUFFNWRka1pXWmNtUThxTCtnM3VVRGl3c0hkaWp0SDlCU1VGMlhsNW1UbjVXVGw1V1RrNUdkbXQ3b2luUmNyS3R1U25SMHBob090aDRkUCtKMm4wTnRmdFBITjVkZjJCajNlNlRhWEpkVlJRbGVUMHJTOHBIRmc4ZVVOaW5iMEZ4djRLU3Z2bkZoZG41dVpuWnVabFp1Wms1R2ZHTTF2WkVjMXRMYzF0clU2TGxhUE9KQTQxSERwNDhlckR4U0hYOWdVMTFlN1llM2V1a2ZnUUFnRFRqT2dBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFiQUVBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUgvcy93TEh1Uk9NR0YrNGtnQUFBQUJKUlU1RXJrSmdnZz09Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyIsInB1cnBvc2UiOiJhbnkgbWFza2FibGUifV0sImlkIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8ifQ==">
 <meta name="theme-color" content="#0f1b14">
 <meta name="mobile-web-app-capable" content="yes">
@@ -336,6 +352,12 @@ let LOTS = [
 let view='products', curProduct=null, curLot=null, qty='', loss=0;
 // 구글 시트 연결 주소 (운영용)
 const SHEET_URL='https://script.google.com/macros/s/AKfycby9_qw5DrF5AFT8fSByM47QOmM8YilLkaNBk0RNxV0vEr-0vjRqMAzOVvv94MRExjHN/exec';
+
+// [v3.4.1] 시간 측정 표시. true면 '재고 새로고침' 후 걸린 시간을 보여준다.
+//   총시간 = 통신(왕복) + 서버계산 + 화면그리기.
+//   어디가 느린지 사람이 눈으로 알 수 있게 나눠서 띄운다.
+//   나중에 필요 없어지면 false로만 바꾸면 된다.
+const SHOW_TIMING = true;
 let todayOut=[]; // 오늘 출고 기록 (이 미리보기 안에서만)
 let RECENTS=[];  // [v2] 시트에서 받아온 최근 5일 출고기록 (화면 하단 '최근 출고 내역')
 let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 표시용)
@@ -347,8 +369,15 @@ let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 
 let CALC={items:[]};
 let quickInputs={};
 let quick=null;
-let TODAY_ORDERS=null;   // [v3.1] 스크립트 v4가 내려주는 오늘 발송분 집계
-let quickDeduct=true;    // [v3.2] ②에서 오늘 기출고를 뺄지 (기본 켬 · 화면에서 끌 수 있음)
+let TODAY_ORDERS=null;   // [v3.1] 구버전 호환 — 스크립트가 내려주는 오늘 하루치 집계
+// [v3.4] 최근 N일 주문 집계 { days, from, to, rows, orders, unmapped, truncated }
+//   스크립트 v4.1+ 의 recentOrders. 없으면 todayOrders로 후퇴한다(구버전 스크립트 대응).
+let ORDERS=null;
+// [v3.4] 주문을 한 번이라도 받아봤는지 / 통신이 실패했는지.
+//   'pending' = 아직 못 받음 · 'ok' = 받음 · 'fail' = 통신 실패
+//   0건과 "못 받음"을 구분하기 위해 필요하다. 둘을 섞으면 출고를 빠뜨린다.
+let ORDERS_STATE='pending';
+let quickDeduct=true;    // [v3.2] ②에서 기출고를 뺄지 (기본 켬 · 화면에서 끌 수 있음)
 // [v3.3] QUICK 모드 — 'order'(주문 출고) | 'manual'(수동 출고=계산기)
 //   manual: 자동 채우기·기출고 차감을 걸지 않는다. 사유를 골라 기록 memo에 남긴다.
 let quickMode='order';
@@ -369,9 +398,14 @@ function loadFromSheet(opts){
   opts = opts || {};
   if(SHEET_URL.indexOf('http')!==0) return;
   if(opts.btn){ opts.btn.disabled=true; opts.btn.textContent='불러오는 중…'; }
-  fetch(SHEET_URL,{method:'GET'})
+  // [v3.4.1] 스톱워치. t0 = 누른 순간 / tNet = 데이터가 다 도착한 순간 / 끝 = 화면까지 그린 순간
+  const t0 = Date.now();
+  let tNet = 0;
+  const url = SHEET_URL + (SHOW_TIMING ? '?diag=1' : '');
+  fetch(url,{method:'GET'})
     .then(r=>r.json())
     .then(res=>{
+      tNet = Date.now() - t0;
       // (1) 작업자 목록
       if(res && Array.isArray(res.workers) && res.workers.length){
         WORKERS=res.workers;
@@ -388,11 +422,15 @@ function loadFromSheet(opts){
         CALC = res.calc;
         if(wasEmpty && view==='quick') render();
       }
-      // [v3.1] 오늘 발송분 집계 (스크립트 v4 이상만 내려줌 — 없어도 무시)
-      if(res && res.todayOrders){
-        const wasNull = !TODAY_ORDERS;
-        TODAY_ORDERS = res.todayOrders;
-        if(wasNull && view==='quick') render();
+      // [v3.1→v3.4] 주문 집계.
+      //   스크립트 v4.1+ = recentOrders(최근 N일) · 구버전 v4 = todayOrders(오늘)만.
+      //   둘 다 없으면 상태를 건드리지 않는다(= 계속 '못 받음'으로 남는다).
+      if(res && res.todayOrders) TODAY_ORDERS = res.todayOrders;
+      if(res && (res.recentOrders || res.todayOrders)){
+        const wasNull = !ORDERS;
+        ORDERS = res.recentOrders || res.todayOrders;
+        ORDERS_STATE = 'ok';
+        if((wasNull || view==='quick') && (view==='quick'||view==='products')) render();
       }
       // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
       if(res && Array.isArray(res.lots) && res.lots.length){
@@ -406,10 +444,31 @@ function loadFromSheet(opts){
         // 상품/LOT 화면이 떠 있으면 새 재고로 다시 그림 (수량 입력 중이면 건드리지 않음)
         if(view==='products' || view==='lots') render();
       }
-      if(opts.btn){ opts.btn.textContent='✓ 최신 재고 받음'; setTimeout(()=>resetReloadBtn(opts.btn),1500); }
+      if(opts.btn){
+        // [v3.4.1] 실제로 걸린 시간을 보여준다. 추측 대신 숫자.
+        const tot = Date.now() - t0;
+        if(SHOW_TIMING){
+          const raw = (res && res.diag && res.diag.total) ? res.diag.total : 0;
+          const srv = Math.min(raw, tNet);              // 서버 시간이 총시간을 넘을 수 없게
+          const net = Math.max(0, tNet - srv);          // 통신 왕복 = 도착까지 − 서버계산
+          const draw = Math.max(0, tot - tNet);         // 화면 그리기
+          opts.btn.textContent = '✓ 받음 ('+(tot/1000).toFixed(1)+'초)';
+          showToast('⏱ 총 '+(tot/1000).toFixed(1)+'초<br>'
+                  + '통신 '+(net/1000).toFixed(1)+'초 · 서버 '+(srv/1000).toFixed(1)+'초 · 화면 '+(draw/1000).toFixed(1)+'초');
+          console.log('[속도] 총', tot, 'ms / 통신', net, '/ 서버', srv, '/ 화면', draw, res && res.diag);
+        } else {
+          opts.btn.textContent='✓ 최신 재고 받음';
+        }
+        // 붙들기 1.5초 → 0.6초. 데이터는 이미 왔는데 버튼이 기다리는 것처럼 보였다.
+        setTimeout(()=>resetReloadBtn(opts.btn),600);
+      }
     })
     .catch(err=>{
       console.log('시트에서 받아오기 실패 — 기본값 사용:', err);
+      // [v3.4] 통신 실패를 기록한다. "주문 0건"과 반드시 구분해야 한다.
+      //   이미 한 번 잘 받아둔 게 있으면 그 값을 살려둔다(화면이 비지 않게).
+      if(ORDERS_STATE!=='ok') ORDERS_STATE='fail';
+      if(view==='quick'||view==='products') render();
       if(opts.btn){ opts.btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>resetReloadBtn(opts.btn),1800); }
     });
 }
@@ -465,10 +524,10 @@ function renderProducts(){
     </div>`;
   // [v3] QUICK 출고 입구
   // [v3.3] 입구 2개 — 주문 출고 / 수동 출고
-  const ordN = (TODAY_ORDERS && TODAY_ORDERS.rows) ? TODAY_ORDERS.rows : 0;
+  const ordN = (ORDERS && ORDERS.rows) ? ORDERS.rows : 0;
   h+=`<button class="quick-btn" onclick="goQuick('order')">
       <span>⚡ 주문 출고
-        <div class="qb-sub">오늘 주문분${ordN?' '+ordN+'건':''} 자동으로 채우고, 이미 나간 건 빼줍니다</div>
+        <div class="qb-sub">미출고 주문분${ordN?' '+ordN+'건':''} 자동으로 채우고, 이미 나간 건 빼줍니다</div>
       </span>
       <span class="qb-arrow">›</span>
     </button>`;
@@ -487,12 +546,12 @@ function renderProducts(){
     </div>`;
   });
   screen.innerHTML=h;
-  // 하단: 최근 5일 출고 내역 (시트에서 받아온 일반주문 기록)
+  // 하단: 최근 출고 내역 (시트에서 받아온 일반주문 기록 · v3.4부터 10일치)
   screen.innerHTML+=recentOutHTML();
   footer.innerHTML='';
 }
 
-// [v2] 최근 5일 '일반주문' 출고 내역 HTML (시트 records 기준, 날짜별 묶음·최신순)
+// [v2] 최근 '일반주문' 출고 내역 HTML (시트 records 기준, 날짜별 묶음·최신순)
 function nameOf(code){ const p=PRODUCTS.find(x=>x.code===code); return p?p.name:code; }
 function fmtMD(ymd){
   const m=(ymd||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ymd||'';
@@ -568,17 +627,9 @@ function renderQuick(){
     h+='<div class="hint">송장 보면서 <b style="color:var(--accent)">주문 들어온 상품만</b> 수량을 넣으세요. 안 온 상품은 비워두면 됩니다.</div>';
   }
   if(quickMode==='order'){
-  // [v3.1] 오늘 발송분 자동 불러오기
-  if(TODAY_ORDERS && TODAY_ORDERS.orders && Object.keys(TODAY_ORDERS.orders).length){
-    h+=`<button class="today-btn" onclick="loadTodayOrders()">📥 오늘 발송분 자동으로 채우기 (주문 ${TODAY_ORDERS.rows||0}건)</button>`;
-  }
-  if(TODAY_ORDERS && Array.isArray(TODAY_ORDERS.unmapped) && TODAY_ORDERS.unmapped.length){
-    h+=`<div class="short-note">⚠ 매핑 안 된 상품 — 아래는 수량에 <b>반영 안 됨</b>:<br>· ${TODAY_ORDERS.unmapped.join('<br>· ')}<br><b>마스터 시트의 QUICK_매핑 탭에 한 줄 추가하면 다음부터 자동 반영됩니다.</b></div>`;
-  }
-  const todayShipped = RECENTS.filter(r=>r.type==='일반주문' && r.qty>0 && r.date===SHEET_TODAY).reduce((s2,r)=>s2+r.qty,0);
-  if(todayShipped>0){
-    h+=`<div class="hint" style="margin-top:0;">ℹ 오늘 이미 일반출고 <b>${todayShipped}개</b> 기록이 있어요 — ② 필요수량에서 <b style="color:var(--accent)">자동으로 빼드립니다</b></div>`;
-  }
+  // [v3.4] 미출고 주문분 — 상태에 따라 4가지로 갈라 보여준다.
+  //   버튼이 그냥 사라지면 "고장인가?" 와 구분이 안 된다. 항상 무언가를 띄운다.
+  h += ordersBoxHTML();
   }   /* [v3.3] quickMode==='order' 블록 끝 */
   CALC.items.forEach((it,i)=>{
     const v=quickInputs[it.name]||'';
@@ -590,24 +641,90 @@ function renderQuick(){
   screen.innerHTML=h;
   footer.innerHTML=`<button class="btn" onclick="goQsum()">필요수량 계산 →</button>`;
 }
-// [v3.1] 오늘 발송분 집계를 수량 입력에 채워넣기 (기존 입력은 지우고 새로 채움)
-function loadTodayOrders(){
-  if(!TODAY_ORDERS || !TODAY_ORDERS.orders) return;
+/* ═══════════ [v3.4] 미출고 주문분 — 상태별 표시 ═══════════ */
+
+/** 창 시작일('YYYY-MM-DD'). 스크립트가 안 알려주면 빈 값 → 차감은 오늘만(안전한 쪽). */
+function orderFrom(){ return (ORDERS && ORDERS.from) ? ORDERS.from : ''; }
+
+/** 주문 집계 상자 HTML. 어떤 경우에도 빈 화면을 내보내지 않는다. */
+function ordersBoxHTML(){
+  // ① 아직 못 받아옴 / 통신 실패
+  if(!ORDERS){
+    const failed = (ORDERS_STATE==='fail');
+    return `<div class="short-note">${failed
+        ? '⏳ 주문을 <b>불러오지 못했어요</b> — 인터넷을 확인하고 다시 눌러주세요.'
+        : '⏳ 주문을 <b>불러오는 중</b>이에요.'}</div>
+      <button class="reload-btn" style="width:100%;text-align:center;margin-bottom:12px;"
+        onclick="loadFromSheet({btn:this})">🔄 주문 다시 불러오기</button>`;
+  }
+  // ② 스크립트가 오류를 알려온 경우
+  if(ORDERS.error){
+    return `<div class="short-note">⚠️ 주문을 <b>못 읽었어요 — 확인 필요</b><br>
+      ${String(ORDERS.error).slice(0,120)}<br>
+      <b>대표님께 알려주세요.</b> 수량은 송장을 보고 직접 넣으셔도 됩니다.</div>
+      <button class="reload-btn" style="width:100%;text-align:center;margin-bottom:12px;"
+        onclick="loadFromSheet({btn:this})">🔄 주문 다시 불러오기</button>`;
+  }
+
+  const has = ORDERS.orders && Object.keys(ORDERS.orders).length > 0;
+  let h='';
+
+  // ③ 발송 건은 있는데 에너지바가 없음 (약과만 나간 경우)
+  if(!has && (ORDERS.rows||0) > 0){
+    h += `<div class="quick-banner done">
+      <div class="qb-step">✅ 확인 완료</div>
+      <div class="qb-main">발송 <b>${ORDERS.rows}건</b> — <b>에너지바 주문은 없습니다</b></div>
+    </div>`;
+  }
+  // ④ 발송 건 자체가 0
+  else if(!has){
+    h += `<div class="quick-banner done">
+      <div class="qb-step">✅ 확인 완료</div>
+      <div class="qb-main"><b>미출고 주문이 없습니다</b></div>
+    </div>`;
+  }
+  // 정상 — 자동 채우기 버튼
+  else {
+    h += `<button class="today-btn" onclick="loadOrderQty()">📥 미출고 주문분 자동으로 채우기 (주문 ${ORDERS.rows||0}건)</button>`;
+  }
+
+  // 매핑 안 된 상품 경고 (있으면 상태와 무관하게 띄운다)
+  if(Array.isArray(ORDERS.unmapped) && ORDERS.unmapped.length){
+    h += `<div class="short-note">⚠ 매핑 안 된 상품 — 아래는 수량에 <b>반영 안 됨</b>:<br>· ${ORDERS.unmapped.join('<br>· ')}<br><b>마스터 시트의 QUICK_매핑 탭에 한 줄 추가하면 다음부터 자동 반영됩니다.</b></div>`;
+  }
+  // 로그를 다 못 훑은 경우 경고
+  if(ORDERS.truncated){
+    h += `<div class="short-note">⚠ 주문 기록이 많아 <b>일부를 못 읽었을 수 있어요.</b> 대표님께 알려주세요.</div>`;
+  }
+  // 기출고 안내
+  const outTot = PRODUCTS.reduce((s,p)=>s+(windowOutByCode()[p.code]||0),0);
+  if(outTot>0){
+    h += `<div class="hint" style="margin-top:0;">ℹ 이미 출고된 <b>${outTot}개</b> 기록이 있어요 — ② 필요수량에서 <b style="color:var(--accent)">자동으로 빼드립니다</b></div>`;
+  }
+  return h;
+}
+
+// [v3.4] 미출고 주문분을 수량 입력에 채워넣기 (기존 입력은 지우고 새로 채움)
+function loadOrderQty(){
+  if(!ORDERS || !ORDERS.orders) return;
   quickInputs={};
   let matched=0;
   const missing=[];
-  Object.keys(TODAY_ORDERS.orders).forEach(name=>{
-    const q=TODAY_ORDERS.orders[name];
+  Object.keys(ORDERS.orders).forEach(name=>{
+    const q=ORDERS.orders[name];
     if(q>0 && CALC.items.some(it=>it.name===name)){ quickInputs[name]=String(q); matched++; }
     else if(q>0) missing.push(name);
   });
+  if(!Array.isArray(ORDERS.unmapped)) ORDERS.unmapped=[];
   missing.forEach(n=>{
     const tag=n+' (구성표에 없는 이름)';
-    if(TODAY_ORDERS.unmapped.indexOf(tag)===-1) TODAY_ORDERS.unmapped.push(tag);
+    if(ORDERS.unmapped.indexOf(tag)===-1) ORDERS.unmapped.push(tag);
   });
   render();
   showToast(matched ? `📥 ${matched}종 자동으로 채웠어요<br>수량 확인 후 계산하세요` : '⚠ 채울 에너지바 주문이 없어요');
 }
+// 이전 이름으로도 부를 수 있게 별칭 유지
+function loadTodayOrders(){ loadOrderQty(); }
 function onQuickInput(i,el){
   const v=el.value.replace(/[^0-9]/g,'');
   if(el.value!==v) el.value=v;
@@ -626,14 +743,18 @@ function computeNeeds(){
   });
   return needs;
 }
-// [v3.2] 오늘(시트 기준 날짜) 이미 기록된 '일반주문' 출고 — 상품코드별 합계.
-//   출처 = 시트에서 받아온 최근 5일 records(RECENTS). QUICK 출고도 '일반주문'으로 기록되므로 함께 잡힌다.
-//   시트에서 오늘 날짜(SHEET_TODAY)를 못 받았으면 전부 0 → 차감 없음(안전한 쪽으로 실패).
-function todayOutByCode(){
+// [v3.2→v3.4] 창 안(최근 N일)에 이미 기록된 '일반주문' 출고 — 상품코드별 합계.
+//   출처 = 시트에서 받아온 records(RECENTS). QUICK 출고도 '일반주문'으로 기록되므로 함께 잡힌다.
+//   ★ 주문 창과 반드시 같은 창을 써야 한다.
+//     주문은 10일치인데 차감이 오늘치뿐이면, 어제 이미 내보낸 물량을 또 내보내게 된다.
+//   창 시작일을 모르면(구버전 스크립트) 오늘만 뺀다 — 적게 빼는 쪽이 안전하다.
+function windowOutByCode(){
   const m={}; PRODUCTS.forEach(p=>m[p.code]=0);
   if(!SHEET_TODAY) return m;
+  const from = orderFrom() || SHEET_TODAY;
   RECENTS.forEach(r=>{
-    if(!r || r.type!=='일반주문' || r.date!==SHEET_TODAY) return;
+    if(!r || r.type!=='일반주문') return;
+    if(!r.date || r.date < from || r.date > SHEET_TODAY) return;
     // [v3.3] 수동 출고(서비스·샘플 등)는 주문분이 아니다 → 차감에서 뺀다.
     //   수동 출고는 memo에 '[사유]'가 붙는다. 주문 출고는 memo가 빈 값.
     if(String(r.memo||'').trim().charAt(0)==='[') return;
@@ -642,11 +763,13 @@ function todayOutByCode(){
   });
   return m;
 }
-// [v3.2] 주문 필요수량(raw) − 오늘 기출고(out) = 남은 필요수량(net)
+// 이전 이름 별칭 유지
+function todayOutByCode(){ return windowOutByCode(); }
+// [v3.2] 주문 필요수량(raw) − 창 안 기출고(out) = 남은 필요수량(net)
 function computeNeedsNet(){
   const raw=computeNeeds();
   // [v3.3] 수동 출고는 '주문 − 기출고'라는 개념 자체가 없다 → 차감하지 않는다.
-  const out=(quickDeduct && quickMode!=='manual') ? todayOutByCode() : {};
+  const out=(quickDeduct && quickMode!=='manual') ? windowOutByCode() : {};
   const net={};
   PRODUCTS.forEach(p=>{ net[p.code]=Math.max(0,(raw[p.code]||0)-(out[p.code]||0)); });
   return {raw:raw, out:out, net:net};
@@ -668,7 +791,7 @@ function renderQsum(){
   const nd = quick ? null : computeNeedsNet();
   const needs = quick ? quick.remaining : nd.net;
   const outTot = quick ? 0 : PRODUCTS.reduce((s2,p)=>s2+(nd.out[p.code]||0),0);
-  const hadOut = (quick || quickMode==='manual') ? false : PRODUCTS.some(p=>todayOutByCode()[p.code]>0);
+  const hadOut = (quick || quickMode==='manual') ? false : PRODUCTS.some(p=>windowOutByCode()[p.code]>0);
   const shorts=[];
   let h='';
   // [v3.3] 수동 출고 — 사유를 다시 보여준다(기록에 그대로 남는 값)
@@ -682,19 +805,22 @@ function renderQsum(){
   if(!quick && quickMode==='manual'){ /* 수동은 차감 배너 없음 */ }
   else if(!quick && quickDeduct && outTot>0){
     h+=`<div class="quick-banner">
-      <div class="qb-step">✓ 오늘 기출고 차감함</div>
-      <div class="qb-main">오늘 이미 <b>${outTot}개</b> 나갔어요 — 아래는 <span style="color:var(--accent)">앞으로 뺄 물량</span>입니다</div>
+      <div class="qb-step">✓ 기출고 차감함</div>
+      <div class="qb-main">이미 <b>${outTot}개</b> 나갔어요 — 아래는 <span style="color:var(--accent)">앞으로 뺄 물량</span>입니다</div>
     </div>`;
   }else if(!quick && !quickDeduct && hadOut){
-    h+=`<div class="short-note">⚠ 차감 꺼짐 — 오늘 기출고를 빼지 않은 <b>주문 전량</b>입니다. 중복 출고 주의.</div>`;
+    h+=`<div class="short-note">⚠ 차감 꺼짐 — 기출고를 빼지 않은 <b>주문 전량</b>입니다. 중복 출고 주의.</div>`;
   }
   h+='<div class="sum-card">';
   PRODUCTS.forEach(p=>{
     const need=needs[p.code]||0, st=stockOf(p.code);
     const short=need>st;
     if(short) shorts.push(p.name+' '+(need-st)+'개 부족');
-    const cut=(!quick && (nd.out[p.code]||0)>0)
-      ? `<div class="sstock" style="color:var(--dim)">주문 ${nd.raw[p.code]||0}개 − 기출고 ${nd.out[p.code]}개</div>` : '';
+    // [v3.4] 계산 과정을 '항상' 보여준다 (결정 2-ⓑ).
+    //   창 밖 주문을 창 안에서 출고한 경우, 뺄셈만 되어 필요수량이 적게 나올 수 있다.
+    //   숫자를 드러내야 대표가 "주문이 왜 이것밖에 안 잡혔지?" 를 눈으로 잡는다.
+    const cut=(!quick && quickMode!=='manual' && quickDeduct)
+      ? `<div class="sstock" style="color:var(--dim)">주문 ${nd.raw[p.code]||0}개 − 기출고 ${nd.out[p.code]||0}개</div>` : '';
     h+=`<div class="sum-row ${short?'short':''} ${need<=0?'zero':''}">
       <div class="sname"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
       <div><div class="sneed">${need}개</div>${cut}<div class="sstock">재고 ${st}개${short?' · ⚠ 부족':''}</div></div>
