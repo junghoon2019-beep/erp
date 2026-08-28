@@ -38,12 +38,12 @@
 
 <div class="hd">
   <h1>한결맛담 ERP 운영매뉴얼</h1>
-  <div class="sub"><b>v2.1 · 2026-08-28</b> · 값이 다르면 <b>현황판 최신판</b>이 정답 · 라이브 변경 시 이 페이지도 갱신(#171)</div>
+  <div class="sub"><b>v2.3 · 2026-08-28 밤</b> · 값이 다르면 <b>현황판 최신판</b>이 정답 · 라이브 변경 시 이 페이지도 갱신(#171)</div>
 </div>
 
 <div class="quick">
   <b>바로가기</b> —
-  <a href="https://junghoon2019-beep.github.io/erp/out/">⚡ 출고</a><a href="https://junghoon2019-beep.github.io/erp/gross/">🟪 그로스</a><a href="https://junghoon2019-beep.github.io/erp/repack/">🟨 소분</a><a href="https://junghoon2019-beep.github.io/erp/ship/">🚚 발송</a><a class="alt" href="https://junghoon2019-beep.github.io/erp/song.html">🧰 변환기</a>
+  <a href="https://junghoon2019-beep.github.io/erp/out/">⚡ 출고</a><a href="https://junghoon2019-beep.github.io/erp/gross/">🟪 그로스</a><a href="https://junghoon2019-beep.github.io/erp/repack/">🟨 소분</a><a href="https://junghoon2019-beep.github.io/erp/ship/">🚚 발송</a><a href="https://junghoon2019-beep.github.io/erp/cs/">📝 CS</a><a class="alt" href="https://junghoon2019-beep.github.io/erp/song.html">🧰 변환기</a>
   <div style="margin-top:7px" class="muted">새 채팅 첫 마디: <b>"현황판 확인하고 다음 작업 이어가자."</b> · 바쁜 날 마감 = <b>"약식 마감"</b>(발행만)</div>
 </div>
 
@@ -105,17 +105,20 @@
 </details>
 
 <details>
-<summary>📝 CS장부 — 고객 요청(날짜 변경 등) 한 줄로</summary>
+<summary>📝 CS 앱 + CS장부 — 고객 요청 한 줄로 (8/28 앱 라이브)</summary>
 <div class="bd">
   <ul class="t">
-    <li><b>어디:</b> 마스터 <b>CS장부</b> 탭. 입력 = 문예* 또는 대표(폰 시트 앱 10초). 한 줄 = 채널 · 주문번호 · 유형 · 새값 · 요청경로 · 증빙링크 · 상태 <b>대기</b></li>
+    <li><b>어디:</b> 폰 <b>CS 앱</b>(위 바로가기 📝 CS · 오른쪽 위 [? 사용법]). 원본 = 마스터 <b>CS장부</b> 탭 — 앱이 대신 써 줌</li>
+    <li><b>접수 10초:</b> 채널 → <b>고객 성함</b> → 최근 주문 카드 톡(주문번호 자동) → 유형 → 새값 → 입력자 → [장부에 적기]. 현장 기준 = <b>채널+성함</b>. 주문번호는 <b>당기기·미루기만 필수</b>(잡이 그 번호로 상자를 찾음)</li>
+    <li><b>오늘 할 일 탭:</b> 사람이 하는 건은 처리 후 [✓ 처리 완료]. <b>날짜 변경 건은 🔒 잠금</b> — 새 날짜 지나야 완료 열림(먼저 닫으면 잡이 손을 놓음)</li>
     <li><b>당기기·미루기만 자동:</b> 새값에 <b>YYYY-MM-DD</b> → 다음 런부터 잡이 그 날짜로 발송, 상태 <b>반영</b>으로. 나머지 유형(옵션·주소·포장·수량·재발송)은 아침 알림에 "★ 오늘 처리할 CS n건"으로만 — 사람이 처리</li>
     <li><b>미루기 = 새 날짜 그대로 발송(가송장 ✗).</b> 옛 기한 다음날 판매자센터 빨간 표시 + 2점 1회 = <b>정상(놀라지 않기)</b>. 고객엔 "시스템상 지연 알림이 갈 수 있다" 안내</li>
     <li><b>증빙:</b> 요청 캡처 → 드라이브 <b>CS증빙/YYYY-MM/</b> → 링크를 H열. 전화 요청은 <b>확인 문자 1통 보내고 그 화면 캡처</b></li>
     <li><b>매월 1일</b> 지난달 미루기 꾸러미 알림 → <b>1~10일</b> 판매자센터 '품질 평가 내역 이의신청' 사유란에:</li>
   </ul>
   <pre class="copy">고객 지정 발송일 옵션 주문 — 상품/옵션 단위 점수 집계 예외 처리 검토 요청</pre>
-  <div class="stop">잡이 읽는 탭 — 열 이름·순서 변경 ✗ · 삭제 대신 상태 "취소" · 같은 주문 재변경은 새 줄. (웹앱 /erp/cs/ 는 다음 차수)</div>
+  <div class="stop">잡이 읽는 탭 — 열 이름·순서 변경 ✗(뒤에 추가만) · 삭제 대신 상태 "취소" · 같은 주문 재변경은 새 줄 · 날짜 건을 시트에서 손으로 완료 ✗ · CS웹앱 코드 바꿀 땐 "배포 관리 → 새 버전"(새 배포 ✗ = 주소 바뀜)</div>
+  <div class="warn">아직 남은 틈: 비날짜 요청("쇼핑백 2개")은 아침 알림에 주문번호만 뜸 → 알림 문구·발송취합 표시는 잡 v1.28(다음 차수)</div>
 </div>
 </details>
 
@@ -135,7 +138,7 @@
 말씀 없으시면 그대로 지급됩니다 :)</pre>
   <ul class="t">
     <li>④ 일급직(서동*·나보*)은 "근무시간" → <b>"근무하신 날짜 수"</b></li>
-    <li>⑤ <b>8월분(9/21) 1회 특례:</b> 8월 급여 = 월별집계 <b>실근무(h) × 구시급</b> 손정산. 새 시급·근무시간은 <b>9/1부터</b>(노무 회신 v1.3)</li>
+    <li>⑤ <b>8월분(9/21) 1회 특례:</b> 8월 급여 = 월별집계 <b>실근무(h) × 구시급</b> 손정산. 새 시급·근무시간은 <b>9/1부터</b>(노무 회신 v1.3). v3.4.1로 8월 일별 금액이 달라 보여도 무해</li>
     <li>⑥ 세무사 전달(8월분 1회): "시스템 바뀌어 이름 뒤 26이 빠졌습니다. 같은 사람입니다."</li>
   </ul>
   <div class="stop">⛔ 캡처는 <b>월별집계에서만.</b> 💼근무/급여 시트 캡처 금지 — 바로 옆이 주민번호 열.</div>
@@ -143,12 +146,14 @@
 </details>
 
 <details>
-<summary>⏰ 근태 — 정정·휴무·연장 (★ 8/27 관리 주체 = 노무 프로젝트)</summary>
+<summary>⏰ 근태 — 정정·휴무·연장 (★ 관리 = 노무 · 8/28 v3.4.1 배포)</summary>
 <div class="bd">
   <ul class="t">
     <li><b>누가 관리:</b> (운영)근태 시트 + 웹앱 코드 = <b>노무 프로젝트</b>. 서버 알림(att_notify)만 시스템. <b>근태 얘기는 노무 채팅 하나로</b>. 알림 조건·문구 바꾸려면 노무 요청 → 시스템 반영</li>
-    <li><b>동결:</b> 9/21 정산 + 추석까지 근태 코드 변경 ✗. 예외 = 8/27~30 노무가 <b>지각·조퇴 분 단위 차감</b>만 수정 → 8/31 재동결. 끝나면 노무가 변경보고로 알려옴 → 시스템 채팅에 전달</li>
-    <li><b>급여 규칙(9/1~):</b> 깎는 건 시계대로(지각·조퇴 분 단위) · 더하는 건 승인대로(<b>지시연장 탭 입력이 유일한 지급 경로</b>). 직원 "연장 지시 받았음" 응답은 🟡 알림 + 일별집계 표시일 뿐</li>
+    <li><b>동결:</b> 9/21 정산 + 추석까지 근태 코드 변경 ✗. 노무 주말 수정은 <b>8/28 v3.4.1 배포 완료</b>(배포 버전 27 · 롤백 = 버전 26) → 8/31부터 재동결</li>
+    <li><b>급여 규칙(v3.4.1 · 9/1 엄격):</b> 인정시간 = min(소정, 실근무, 소정−조퇴). 지각·조퇴 분 단위 차감 · 지각 채우기 자동 인정 · <b>★ 한쪽만 찍힌 날 = 보정 승인 전 기본급 0</b>(예전과 반대 — 관리 페이지 [승인]해야 붙음) · 연장은 <b>지시연장 탭 입력분만</b></li>
+    <li><b>🟡 연장응답 새 문구:</b> "지각 NN분 제외 → 순초과 NN분" — 지시연장엔 <b>순초과분 이내, 실제 부탁한 시간만</b>(총초과분 그대로 ✗)</li>
+    <li><b>대표 1회 실행:</b> 근태 메뉴 「📖 사용설명서 다시 만들기」(옛 급여 문구 → v3.4.1)</li>
     <li><b>9/1 전 대표 입력 3건:</b> 시급이력 이은* 2026-09-01 11,000 · 기본설정 정은* 근무요일 수·토·일 · 9월 월요일 4회(9/7·14·21·28) 지시연장 30분</li>
     <li><b>평소 = 할 일 없음.</b> 직원이 키오스크로 출퇴근. 알림 오면만 처리</li>
     <li><b>퇴근 시간이 지났는데 일을 계속하고 있으면 그 자리에서 "퇴근하세요"라고 명확히 말한다.</b> 알면서 두면 연장 임금 의무가 생길 수 있음(1350 확인 8/13). 옷·가방 챙기기·잡담 같은 비업무 잔류는 무방</li>
@@ -156,7 +161,7 @@
     <li><b>무기록일 점검</b>에 뜬 날이 실제 휴무면 → [휴무로 확인](사유 한 줄 필수). 되돌리기 = 보정대기 탭 그 줄 삭제</li>
     <li>단기 인력(명절 15~18명) = 시스템 밖(구글 폼 예정). 추석 후 v3.5 묶음(요일별 소정·근무요일·계약종료일·월 60h 경고)</li>
   </ul>
-  <div class="stop">⛔ <b>기록 탭 직접 수정 금지</b>(append-only) — 정정은 반드시 관리 페이지로. 동결 중 코드 수정 ✗ · 근태를 노무 채팅 밖에서 고치기 ✗.</div>
+  <div class="stop">⛔ <b>기록 탭 직접 수정 금지</b>(append-only) — 정정은 반드시 관리 페이지로. 동결 중(8/31~) 코드 수정 ✗ · 근태를 노무 채팅 밖에서 고치기 ✗. 낮에 재계산하면 근무 중인 사람이 '퇴근누락·0'으로 보이는 건 정상(밤 23시 정리).</div>
 </div>
 </details>
 
@@ -204,6 +209,8 @@
     <li><b>송장 이상</b> → 로그 탭 → 실패 건만 변환기 폴백 + 캡처 들고 클로드. 사유 "역등록 재시도 성공"·"발송일대기"·"보류_희망발송" = 정상</li>
     <li><b>08:30 📦 재고 알림 안 옴</b> → 클로드에 확인 요청(서버 rginv.log)</li>
     <li><b>앱 "나갈 물량 없습니다"</b> → 앱 완전 종료 → 재실행 → 그래도면 출고소화 탭 캡처</li>
+    <li><b>근태 일별집계 급여 0</b> → 상태열 `퇴근누락`·`⚠무기록` = 승인 전 0이 정상(v3.4.1)</li>
+    <li><b>CS 앱 "못 불러왔어요"</b> → 새로고침·앱 껐다 켜기 → 계속이면 클로드 · <b>완료 버튼이 🔒</b> = 날짜 변경 건은 새 날짜 전엔 정상 잠금</li>
     <li><b>매출 안 들어옴</b> → 클로드에 확인 요청 (0건 종료 = 정상)</li>
     <li><b>발송취합 안 갱신</b> → 탭 헤더 갱신 시각 — 잡 러닝(매시 :05) 전이면 정상</li>
     <li><b>우체국쇼핑 메일 안 옴</b> → 로그 확인 — 접수·장부는 안전, 다음 런에 재발송</li>
@@ -223,9 +230,10 @@
     <li><b>(운영)단가표</b> 🤖 — 원가 엔진. 시세는 직원 유지</li>
     <li><b>(운영)상품코드 마스터</b> 🔘 — 번역표 + 송장 매핑 + <b>로그·발송취합·QUICK_매핑·CS장부·로켓재고_감시 탭</b></li>
     <li><b>(운영)광고분석</b> 🔘 — 로켓 광고 진짜 손익. 매월 15일경</li>
-    <li><b>(운영)근태</b> 🔘 — 출퇴근 원장 + 키오스크·관리 페이지. <b>관리 = 노무 프로젝트</b>(8/27~)</li>
+    <li><b>(운영)근태</b> 🔘 — 출퇴근 원장 + 키오스크·관리 페이지 <b>v3.4.1</b>. <b>관리 = 노무 프로젝트</b>(8/27~)</li>
     <li><b>에너지바 재고 시트</b> 🤖 — LOT 원장 + <b>출고소화</b>(주문 도장) 탭. 폰앱이 기록</li>
-    <li><b>폰앱 4종</b> 🔘 — out · gross · repack · ship (상단 바로가기)</li>
+    <li><b>폰앱 5종</b> 🔘 — out · gross · repack · ship · <b>cs</b>(상단 바로가기)</li>
+    <li><b>CS 웹앱</b> 🤖 — 독립 Apps Script `CS웹앱` v1.2 = CS 앱 ↔ CS장부 우체통. 코드 바꾸면 "배포 관리 → 새 버전"</li>
     <li><b>송장변환기</b> 🧰 — 수동 폴백</li>
     <li><b>NCP 서버</b> 🤖 — 수집 3종 · 송장잡 v1.27 · <b>로켓 재고 감시 08:30</b> · 옵션갱신 · 근태 알림 v1.3(/root/att_notify.py). 확인은 로그 탭·알림으로만. <b>파일 올릴 땐 nano</b>(셸에 내용 붙여넣기 ✗)</li>
     <li><b>우체국쇼핑 투입함</b> 🤖 — 드라이브 폴더 반자동</li>
@@ -238,6 +246,7 @@
 <summary>📅 데드라인 (1회성)</summary>
 <div class="bd">
   <ul class="t">
+    <li><b>되도록 빨리:</b> 근태 「📖 사용설명서 다시 만들기」 1회</li>
     <li><b>~2026-09-01:</b> 근태 대표 입력 3건(시급이력 이은* · 정은* 요일 · 월요일 지시연장 4회)</li>
     <li><b>2026-09-01:</b> 첫 월초 CS 꾸러미 알림 → 이의신청 문구 첫 실행</li>
     <li><b>2026-09-10:</b> 로켓 자연판매 1차 효과 비교 · <b>09-15경</b> 8월 광고 굽기</li>
@@ -253,12 +262,12 @@
 </details>
 
 <details>
-<summary>⛔ 금지 23 (한 눈)</summary>
+<summary>⛔ 금지 25 (한 눈)</summary>
 <div class="bd" style="padding-top:8px">
-  <span class="chip">ROAS 2주 내 재수정</span><span class="chip">로켓 판매가 인하</span><span class="chip">엑셀 직접 복붙</span><span class="chip">카카오 대행사 정보</span><span class="chip">마스터 탭·행 삭제</span><span class="chip">단가표 onOpen 덮어쓰기</span><span class="chip">레거시·UNION 탭 삭제</span><span class="chip">미러 탭 수정</span><span class="chip">변환기 CSV 재저장</span><span class="chip">시트 직접 수정</span><span class="chip">번역표 E 직접 타이핑</span><span class="chip">키·시크릿 채팅 붙여넣기</span><span class="chip">우체국쇼핑 폴더·공유 삭제</span><span class="chip">근태 기록 탭 직접 수정</span><span class="chip">💼근무/급여에서 급여 캡처</span><span class="chip">옵션 재활성화 때 재고 999 잊기</span><span class="chip">수동출고 memo [ ] 지우기</span><span class="chip">정상 판매 상품에 예약판매 켜기</span><span class="chip">SSG 단품에 희망배송 켜기</span><span class="chip">출고 되돌릴 때 출고소화 줄 안 지우기</span><span class="chip">교환·재발송 카톡 한 줄 없이</span><span class="chip">서버에 파일 내용 셸 붙여넣기(nano로)</span><span class="chip">동결 중 근태 코드 수정 · 노무 채팅 밖 근태 수정</span>
+  <span class="chip">ROAS 2주 내 재수정</span><span class="chip">로켓 판매가 인하</span><span class="chip">엑셀 직접 복붙</span><span class="chip">카카오 대행사 정보</span><span class="chip">마스터 탭·행 삭제</span><span class="chip">단가표 onOpen 덮어쓰기</span><span class="chip">레거시·UNION 탭 삭제</span><span class="chip">미러 탭 수정</span><span class="chip">변환기 CSV 재저장</span><span class="chip">시트 직접 수정</span><span class="chip">번역표 E 직접 타이핑</span><span class="chip">키·시크릿 채팅 붙여넣기</span><span class="chip">우체국쇼핑 폴더·공유 삭제</span><span class="chip">근태 기록 탭 직접 수정</span><span class="chip">💼근무/급여에서 급여 캡처</span><span class="chip">옵션 재활성화 때 재고 999 잊기</span><span class="chip">수동출고 memo [ ] 지우기</span><span class="chip">정상 판매 상품에 예약판매 켜기</span><span class="chip">SSG 단품에 희망배송 켜기</span><span class="chip">출고 되돌릴 때 출고소화 줄 안 지우기</span><span class="chip">교환·재발송 카톡 한 줄 없이</span><span class="chip">서버에 파일 내용 셸 붙여넣기(nano로)</span><span class="chip">동결 중 근태 코드 수정 · 노무 채팅 밖 근태 수정</span><span class="chip">🟡 총초과분 그대로 지시연장 입력</span><span class="chip">CS 날짜 건 새 날짜 전 완료 · CS웹앱 "새 배포"</span>
 </div>
 </details>
 
-<div class="ft">정본: 클로드 프로젝트 <b>claude/한결맛담_운영매뉴얼_v2.md</b>(v2.1) · 최신 사실 = 현황판 최신판<br>이 페이지는 라이브 변경 세션마다 클로드가 재생성 → GitHub 업로드로 갱신 (#171)</div>
+<div class="ft">정본: 클로드 프로젝트 <b>claude/한결맛담_운영매뉴얼_v2.md</b>(v2.3) · 최신 사실 = 현황판 최신판<br>이 페이지는 라이브 변경 세션마다 클로드가 재생성 → GitHub 업로드로 갱신 (#171)</div>
 
 </div></body></html>
