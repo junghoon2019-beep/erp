@@ -40,13 +40,13 @@
 
 <div class="hd">
   <h1>한결맛담 ERP 운영매뉴얼</h1>
-  <div class="sub"><b>v2.5 · 2026-09-03</b> · 값이 다르면 <b>현황판 최신판</b>이 정답 · 라이브 변경 시 이 페이지도 갱신(#171)</div>
+  <div class="sub"><b>v2.6 · 2026-09-04</b> · 값이 다르면 <b>현황판 최신판</b>이 정답 · 라이브 변경 시 이 페이지도 갱신(#171)</div>
 </div>
 
 <div class="quick">
   <b>바로가기</b> —
   <a href="https://junghoon2019-beep.github.io/erp/out/">⚡ 출고</a><a href="https://junghoon2019-beep.github.io/erp/gross/">🟪 그로스</a><a href="https://junghoon2019-beep.github.io/erp/repack/">🟨 소분</a><a href="https://junghoon2019-beep.github.io/erp/ship/">🚚 발송</a><a href="https://junghoon2019-beep.github.io/erp/cs/">📝 CS</a><a class="alt" href="https://junghoon2019-beep.github.io/erp/song.html">🧰 변환기</a>
-  <div style="margin-top:7px" class="muted">새 채팅 첫 마디: <b>"현황판 확인하고 다음 작업 이어가자."</b> · 바쁜 날 마감 = <b>"약식 마감"</b>(발행만) · <b>v2.5:</b> 발송일 옵션 상시화 라이브 · 광고·자연판매 = 마케팅 · 단기 인력 별도 폼</div>
+  <div style="margin-top:7px" class="muted">새 채팅 첫 마디: <b>"현황판 확인하고 다음 작업 이어가자."</b> · 바쁜 날 마감 = <b>"약식 마감"</b>(발행만) · <b>v2.6:</b> 송장잡 v1.30(예약 발송분 = CS 새 날짜 · 📝CS n) · 자연판매 경계 확정 · 마케팅 변경보고 규칙</div>
 </div>
 
 <details open>
@@ -61,12 +61,13 @@
   <div class="row"><div class="when">매월 말~월초</div><div><b>월별집계 인원 세기</b> — 빠진 사람 = 미지급 사고 (단기 인력은 별도 시트 · ⏰ 카드)</div></div>
   <div class="row"><div class="when">매월 21일</div><div><b>급여 안내</b> (아래 카드)</div></div>
   <div class="row"><div class="when">명절마다</div><div>ship.env <b>SHIP_HOLIDAYS</b>(쉬는 날) · <b>SD_SKIP_DATES</b>(발송은 하되 옵션에서 뺄 날) 갱신 — 클로드와 한 줄</div></div>
+  <div class="row"><div class="when">변경보고 올 때</div><div>마케팅·노무가 <b>변경보고N호</b>를 보내면 → 클로드가 매뉴얼 반영 + 회신 → <b>대표는 회신 전달만</b>(마케팅 1호 = 9/4 · 노무 2호 = 9/3)</div></div>
   <h3>자동으로 도는 것 (손 안 댐)</h3>
-  <div class="row"><div class="when">06:00</div><div>옵션갱신(지난 발송일 숨김 + 오늘출발×SD 감시) → <b>🆕 발송일 롤링 v0.1.1</b>(13개 세트 · 내일부터 영업일 15일 채움 · 14일 지난 날짜 삭제 · 📅 카톡 한 줄)</div></div>
+  <div class="row"><div class="when">06:00</div><div>옵션갱신(지난 발송일 숨김 + 오늘출발×SD 감시) → <b>발송일 롤링 v0.1.1</b>(13개 세트 · 내일부터 영업일 15일 채움 · 14일 지난 날짜 삭제 · 📅 카톡 한 줄 · 9/4 첫 자동 런 ✅)</div></div>
   <div class="row"><div class="when">08:30</div><div><b>📦 로켓 재고 감시</b> — 품절 ❌ · 임박 ⚠(≤10일) · 적체 💤 만 알림</div></div>
   <div class="row"><div class="when">매시 :00·:15·:30</div><div>매출 수집 3종</div></div>
   <div class="row"><div class="when">08~17시 :05</div><div>우체국쇼핑 투입함</div></div>
-  <div class="row"><div class="when">09~16시 :05</div><div>송장잡 <b>v1.29</b> — 접수·채번·역등록 + 발송취합(📝 CS 요청 섹션) + CS장부 날짜 반영 + 역등록 부분 실패 재시도 + 시트 503 재시도</div></div>
+  <div class="row"><div class="when">09~16시 :05</div><div>송장잡 <b>v1.30</b> — 접수·채번·역등록 + 발송취합(📝 CS 요청 섹션 · <b>🆕 예약 발송분 = CS 새 날짜</b>) + CS장부 날짜 반영 + 역등록 부분 실패 재시도 + 시트 503 재시도</div></div>
   <div class="row"><div class="when">평일</div><div>근태 서버 알림 — 출근 3분 전 · <b>퇴근 정각</b> 본인 DM · 13h 경보 (단기 인력 폼과 무관)</div></div>
 </div>
 </details>
@@ -76,13 +77,12 @@
 <div class="bd">
   <ul class="t">
     <li><b>뭐가 바뀌었나:</b> 손님이 고르는 "M월 D일(요일) 발송" 옵션을 <b>사람이 더 이상 안 만든다.</b> 매일 06:00 잡이 13개 선물세트에 <b>내일부터 영업일 15일</b> 창을 채우고(토·일·SHIP_HOLIDAYS·SD_SKIP_DATES 제외), 지난 날짜는 옵션갱신이 숨기고 14일 지나면 삭제</li>
-    <li><b>9/3 첫 적용:</b> 13개 · 창 9/4~9/30(9/22·23 제외일 · 9/24·25 휴일) · 추가금은 기존 값 그대로 승계. 9/4 06:00부터 자동</li>
+    <li><b>9/3 첫 적용:</b> 13개 · 창 9/4~9/30(9/22·23 제외일 · 9/24·25 휴일) · 추가금은 기존 값 그대로 승계. <b>9/4 06:00 첫 자동 런 ✅</b>(13/13 · 추가 10/1 · 삭제 8/20 = 기대값 일치 · 옵션창 시간순 정렬 확인)</li>
     <li><b>카톡 읽는 법:</b> <span class="muted">📅 발송일 롤링 06:0x · 13/13 ✅ · 추가 10/1(목) 85건 · 삭제 8/20(목) 85건</span> — 평일엔 새 날짜 1개·지난 날짜 1개가 보통. <b>⚠ 상품명 — 사유</b> 줄 = 그 상품만 실패(스냅샷 이름 같이 옴) → 캡처 들고 클로드. <b>ℹ</b> = 안내</li>
     <li><b>추가금(옵션 가격) 바꾸고 싶을 때:</b> 판매자센터 옵션 일괄수정으로 그 구성의 <b>살아있는 발송일 옵션 전부</b>를 한 번에 → 다음날 새 날짜부터 자동 상속. 일부만 바꾸면 "가장 먼 날짜" 값이 복사되니 <b>먼 날짜부터 빠짐없이</b></li>
     <li><b>새 세트에 발송일 옵션 붙일 때:</b> 판매자센터에서 발송일 옵션 <b>손으로 1개</b> 먼저(관리코드 코드-SDyymmdd) → 클로드에 원상품번호 → 목록(sd_products.json) 추가 → 다음 06:00부터</li>
     <li><b>명절 날짜 2개(ship.env):</b> <b>SHIP_HOLIDAYS</b> = 잡이 쉬는 날(우체국 마감~재개 · 송장잡도 쉼) / <b>SD_SKIP_DATES</b> = 발송은 하지만 도착 보장이 안 돼 옵션에서 뺄 날(지금 9/22·9/23 · 송장잡 무영향). 여기 있는 날짜에 살아있는 옵션이 있으면 다음 06:00에 자동 삭제</li>
     <li><b>롤백:</b> 서버 run_optsd.sh 마지막 2줄 주석. <b>되돌리기:</b> 실행 전 스냅샷(sd_snaps/ · 30일)에서 클로드와 한 줄</li>
-    <li>옵션창에서 새 날짜가 <b>목록 끝</b>에 붙어 보이면 캡처(정렬은 v0.2 후보)</li>
   </ul>
   <div class="stop">발송일 옵션을 <b>판매자센터에서 손으로 추가·삭제 ✗</b>(잡과 충돌 — 추가금 변경만) · <b>SHIP_HOLIDAYS에 "발송되는 날" 넣기 ✗</b>(송장잡이 쉰다 — 옵션만 뺄 날은 SD_SKIP_DATES) · 옵션 다시 켤 때 재고 999 잊기 ✗ · 실상품에 API 시험 ✗(테스트 상품 13742341706 판매중지 유지)</div>
 </div>
@@ -142,7 +142,7 @@
     <li><b>🟨 소분검수:</b> <b>부족일 때만</b> 한 줄</li>
     <li><b>🚚 발송 v1.1:</b> <b>맨 위 📝 CS 요청 카드 → 포장 전에 먼저</b> · 오늘 발송분 · 익일 발송분 · 방문퀵 · 예약분 · ⚠ 수동 대기. 맨 아래 "v1.1" 아니면 앱 껐다 켜기</li>
   </ul>
-  <div class="warn">화면은 스냅샷 — 작업 전 새로고침. <b>유통기한 = 제조일 + 6개월.</b> 예약 발송분 날짜는 <b>주문 원래 날짜</b>(CS로 당긴 건은 📝 CS 섹션에서 확인).</div>
+  <div class="warn">화면은 스냅샷 — 작업 전 새로고침. <b>유통기한 = 제조일 + 6개월.</b> 🆕 <b>예약 발송분 날짜 = CS 당기기/미루기가 반영된 날짜</b>(송장잡 v1.30 · 9/4). 날짜 줄의 <b>📝CS n</b> = 그 날짜로 CS가 옮겨온 건 수. CS 앱으로 바꾸면 다음 런(매시 :05)부터 옮겨 보인다.</div>
   <div class="stop">시트 수식 열 직접 입력 ✗ · 테스트 흔적은 <b>행 삭제</b> · memo의 [ ] 지우기 ✗ · QUICK 마치기 전 이탈 ✗ · 되돌릴 때 출고소화 줄 안 지우기 ✗</div>
 </div>
 </details>
@@ -154,7 +154,7 @@
     <li><b>어디:</b> 폰 <b>CS 앱</b>(바로가기 📝 CS · [? 사용법]). 원본 = 마스터 <b>CS장부</b> 탭 — 앱이 대신 써 줌</li>
     <li><b>접수 10초:</b> 채널 → <b>고객 성함</b> → 주문 카드 톡 → 유형 → 새값 → 입력자 → [장부에 적기]. 주문번호는 <b>당기기·미루기만 필수</b></li>
     <li><b>오늘 할 일 탭:</b> 처리 후 [✓ 처리 완료]. <b>날짜 변경 건은 🔒 잠금</b> — 새 날짜 지나야 열림</li>
-    <li><b>당기기·미루기만 자동:</b> 새값 <b>YYYY-MM-DD</b> → 다음 런부터 잡이 그 날짜로 발송, 상태 <b>반영</b></li>
+    <li><b>당기기·미루기만 자동:</b> 새값 <b>YYYY-MM-DD</b> → 다음 런부터 잡이 그 날짜로 발송, 상태 <b>반영</b>. 🆕 발송 앱 예약 목록도 새 날짜로 옮겨 보임</li>
     <li><b>요청이 포장자에게 닿는 길 3개:</b> ① 아침 알림 ② 발송취합 탭 📝 섹션 ③ 발송 앱 📝 카드. <b>처리했으면 CS 앱에서 완료</b></li>
     <li><b>미루기 = 새 날짜 그대로 발송(가송장 ✗).</b> 빨간 표시 + 2점 1회 = 정상 → 🏅 이의신청</li>
     <li><b>증빙:</b> 캡처 → 드라이브 <b>CS증빙/YYYY-MM/</b> → H열. 전화 요청은 확인 문자 + 캡처</li>
@@ -203,7 +203,7 @@
 </details>
 
 <details>
-<summary>⏰ 근태 — 정정·휴무·연장 · 🆕 단기 인력 별도 폼 (관리 = 노무 · v3.4.1)</summary>
+<summary>⏰ 근태 — 정정·휴무·연장 · 단기 인력 별도 폼 (관리 = 노무 · v3.4.1)</summary>
 <div class="bd">
   <ul class="t">
     <li><b>누가 관리:</b> (운영)근태 시트 + 웹앱 코드 = <b>노무 프로젝트</b>. 서버 알림만 시스템. <b>근태 얘기는 노무 채팅 하나로</b>. 노무가 바꾼 건 변경보고 N호로 매번 옴(2호 = 9/3)</li>
@@ -214,7 +214,7 @@
     <li><b>퇴근 시간이 지났는데 일을 계속하면 그 자리에서 "퇴근하세요".</b></li>
     <li><b>기록 이상</b> → 관리 페이지 → 날짜 → [＋ 기록 추가] → 본인 확인 · <b>무기록일</b>이 실제 휴무면 [휴무로 확인]</li>
   </ul>
-  <h3>🆕 추석 단기 인력(15명+예비) = 별도 체계 · 키오스크·(운영)근태·서버 알림 무관 (8/31 가동)</h3>
+  <h3>추석 단기 인력(15명+예비) = 별도 체계 · 키오스크·(운영)근태·서버 알림 무관 (8/31 가동)</h3>
   <ul class="t">
     <li><b>폼</b> 「한결맛담 추석 단기 출퇴근 체크」 — 구분(출근/퇴근) · 이름 드롭다운. <b>현장 전용 기기 2대에서만 · 링크 외부 배포 ✗</b></li>
     <li>폼 편집: <a class="lnk" href="https://docs.google.com/forms/d/1HafuzAdD9hcDc2DiquMqi_uYRYao5RnbRuo20UWpUaY/edit">docs.google.com/forms/d/1HafuzAdD9hcDc2DiquMqi_uYRYao5RnbRuo20UWpUaY/edit</a></li>
@@ -227,7 +227,7 @@
 </details>
 
 <details>
-<summary>📊 정산(매주 월 · 대표) · 광고 굽기 · 자연판매 (★ 마케팅)</summary>
+<summary>📊 정산(매주 월 · 대표) · 광고 굽기 · 자연판매 (★ 마케팅 · 경계 확정)</summary>
 <div class="bd">
   <h3>매주 월 — 정산 반영 (5~10분 · 대표 유지)</h3>
   <ul class="t">
@@ -241,11 +241,16 @@
     <li>정본 = 클로드 프로젝트 <b>굽기이관문서_회신_시스템측_v1.md</b>. 마케팅 → 시스템 요청은 요청문 형식. 8월 굽기(9/15경) = 마케팅 첫 실전</li>
     <li>판단은 언제나 <b>광고후실손익(확정)</b> · 광고 손익표 하나로 장사를 판정 ✗</li>
   </ul>
-  <h3>로켓 자연판매 실험 = 마케팅 (9/3 이관)</h3>
+  <h3>로켓 자연판매 실험 = 마케팅 (9/3 이관 · 🆕 9/4 경계 확정)</h3>
   <ul class="t">
-    <li>8/27 상품명·태그 20개 추석 키워드 반영(자연판매 1차) → <b>9/10 효과 비교 · 9/26 "추석" 되돌리기 · 감사박스 태그 · 취소 사유</b> 전부 마케팅. 대표 = WING 캡처·반영 클릭. 정본 = <b>자연판매이관문서_시스템측_v1.md</b>(기준선 숫자 전부)</li>
+    <li><b>경계(마케팅 변경보고 1호 · 대표 9/4):</b> 비교·판정·키워드안·기록 = <b>마케팅</b> / WING 캡처·반영 클릭 = <b>대표</b> / 정산·재고 숫자(요청 시)·08:30 재고 알림 = <b>시스템</b>. 9/10 효과 비교 · 9/26 "추석" 되돌리기 · 감사박스 태그 · 취소 사유 전부 마케팅. 실험 정본 = 마케팅 프로젝트(결과는 대표 경유)</li>
+    <li>🆕 <b>8/27 실제 적용 상품명(승인 완료):</b> <span class="muted">한결맛담 수제 찹쌀 약과 선물세트 추석 명절 한과 선물 보자기 포장 블루 (10구 400g ,15구 600g)</span> · 핑크는 "핑크"만 다름. 보자기 = <b>블루·핑크 2개 노출상품</b> × 각 400g/600g(옵션ID 4개) — "1상품 4옵션"은 정정</li>
     <li>WING·광고센터·판매자센터는 클로드가 못 연다 — 캡처 = 대표</li>
     <li>📦 재고 알림에서 같은 상품명 두 줄이면 하나는 <b>반품 옵션</b> — 무시</li>
+  </ul>
+  <h3>🆕 마케팅 변경보고 규칙 (대표 9/4)</h3>
+  <ul class="t">
+    <li>마케팅 쪽 데이터·문서·역할이 바뀌어 <b>시스템이 알아야 할 것</b>이 생기면 → <b>변경보고_마케팅NN호</b> → 클로드가 매뉴얼 반영 + 회신(마케팅변경보고N호_회신_시스템측) → <b>대표는 회신 전달</b>. 모든 변경을 매번이 아니라 알아야 할 것만(노무 변경보고와 같은 틀). 1호 = 9/4</li>
   </ul>
 </div>
 </details>
@@ -258,7 +263,7 @@
     <li>E는 <b>반드시 ▼ 드롭다운</b> — 직접 타이핑 ✗</li>
     <li>에너지바가 든 상품이면 <b>QUICK_매핑</b> 탭에도 1줄. 아니면 B열 빈칸 줄</li>
     <li>우체국쇼핑 <b>스킵_미매핑</b> → 우체국쇼핑 탭 1줄 추가 후 파일 재투입</li>
-    <li>🆕 발송일 옵션을 붙일 세트면 → 판매자센터에서 발송일 옵션 <b>손으로 1개</b> → 클로드에 원상품번호(목록 추가)</li>
+    <li>발송일 옵션을 붙일 세트면 → 판매자센터에서 발송일 옵션 <b>손으로 1개</b> → 클로드에 원상품번호(목록 추가)</li>
   </ul>
 </div>
 </details>
@@ -268,11 +273,12 @@
 <div class="bd">
   <ul class="t">
     <li><b>송장 이상</b> → 로그 탭 → 실패 건만 변환기 폴백 + 캡처. "역등록 재시도 성공"·"발송일대기"·"보류_희망발송"·"접수완료_익일통지" = 정상</li>
-    <li><b>서버 로그 "… 503 — n초 대기 후 재시도"</b> = 정상. 매 런 반복이면 클로드</li>
+    <li><b>서버 로그 "… 503 — n초 대기 후 재시도" · "스스 429 — …"</b> = 정상. 매 런 반복이면 클로드</li>
     <li><b>정규 런이 통째로 죽음</b> → <span class="muted">bash /root/hankyeol-erp/run_ship.sh</span> 수동 만회</li>
-    <li>🆕 <b>06:00 📅 롤링 카톡이 안 옴</b> → 서버 <span class="muted">tail -20 /root/hankyeol-erp/sd_rolling.log</span> → "SHIP_HOLIDAYS 비어 있음"이면 ship.env 확인 · 그 외 캡처 들고 클로드. 롤백 = run_optsd.sh 마지막 2줄 주석</li>
-    <li>🆕 <b>📅 카톡에 ⚠ 검증 실패</b> → 그 상품 옵션창 확인 → 이상하면 스냅샷으로 되돌리기(클로드와)</li>
-    <li>🆕 <b>옵션창에 휴일·제외일 날짜가 보임</b> → ship.env SHIP_HOLIDAYS·SD_SKIP_DATES에 추가 → 다음 06:00 정리</li>
+    <li><b>06:00 📅 롤링 카톡이 안 옴</b> → 서버 <span class="muted">tail -20 /root/hankyeol-erp/sd_rolling.log</span> → "SHIP_HOLIDAYS 비어 있음"이면 ship.env 확인 · 그 외 캡처 들고 클로드. 롤백 = run_optsd.sh 마지막 2줄 주석</li>
+    <li><b>📅 카톡에 ⚠ 검증 실패</b> → 그 상품 옵션창 확인 → 이상하면 스냅샷으로 되돌리기(클로드와)</li>
+    <li><b>옵션창에 휴일·제외일 날짜가 보임</b> → ship.env SHIP_HOLIDAYS·SD_SKIP_DATES에 추가 → 다음 06:00 정리</li>
+    <li>🆕 <b>CS로 날짜를 바꿨는데 예약 발송분엔 옛 날짜</b> → 다음 런(매시 :05) 전이면 정상 · CS장부 그 행이 대기/반영인지 → 그래도면 캡처 들고 클로드</li>
     <li><b>08:30 📦 재고 알림 안 옴</b> → 클로드에 확인 요청</li>
     <li><b>앱 "나갈 물량 없습니다"</b> → 앱 완전 종료 → 재실행</li>
     <li><b>발송 앱에 📝 카드가 안 뜨는데 CS장부엔 있다</b> → 날짜 유형은 당일에만 · "v1.1" 확인</li>
@@ -293,15 +299,15 @@
     <li><b>(운영)매출</b> 🤖 — 주문 자동 수집·원가 굽기. 손 안 댐</li>
     <li><b>(운영)정산</b> 🔘 — 쿠팡 확정 실마진 층. 매주 월(대표)</li>
     <li><b>(운영)단가표</b> 🤖 — 원가 엔진</li>
-    <li><b>(운영)상품코드 마스터</b> 🔘 — 번역표 + 송장 매핑 + <b>로그·발송취합·QUICK_매핑·CS장부·로켓재고_감시 탭</b></li>
+    <li><b>(운영)상품코드 마스터</b> 🔘 — 번역표 + 송장 매핑 + <b>로그·발송취합·QUICK_매핑·CS장부·로켓재고_감시 탭</b>. 쿠팡 탭은 옵션ID 단위</li>
     <li><b>(운영)광고분석</b> 🔘 — 로켓 광고 손익. <b>굽기·판정 = 마케팅</b>(9/2)</li>
     <li><b>(운영)근태</b> 🔘 — 출퇴근 원장 v3.4.1. <b>관리 = 노무</b>. 단기 인력은 별도 폼·시트</li>
     <li><b>에너지바 재고 시트</b> 🤖 — LOT 원장 + 출고소화 탭</li>
     <li><b>폰앱 5종</b> 🔘 — out v3.7 · gross · repack · <b>ship v1.1</b> · cs v1.1.1</li>
-    <li><b>발송취합웹앱 v1.1</b> 🤖 — 발송 앱 ↔ 발송취합 탭 우체통(이름 변경 완료 9/3)</li>
+    <li><b>발송취합웹앱 v1.1</b> 🤖 — 발송 앱 ↔ 발송취합 탭 우체통</li>
     <li><b>CS 웹앱 v1.2</b> 🤖 — CS 앱 ↔ CS장부 우체통</li>
     <li><b>송장변환기</b> 🧰 — 수동 폴백</li>
-    <li><b>NCP 서버</b> 🤖 — 수집 3종 · <b>송장잡 v1.29</b> · 재고 감시 08:30 · 옵션갱신 + <b>🆕 발송일 롤링 v0.1.1</b>(06:00) · 근태 알림 v1.3. 확인은 로그 탭·알림으로만. <b>파일 올릴 땐 base64 블록 또는 nano</b></li>
+    <li><b>NCP 서버</b> 🤖 — 수집 3종 · <b>송장잡 v1.30</b>(9/4) · 재고 감시 08:30 · 옵션갱신 + <b>발송일 롤링 v0.1.1</b>(06:00) · 근태 알림 v1.3. 확인은 로그 탭·알림으로만. <b>파일 올릴 땐 base64 블록 또는 nano</b></li>
     <li><b>우체국쇼핑 투입함</b> 🤖 — 드라이브 폴더 반자동</li>
     <li><b>카카오쇼핑 API</b> 🤖 — 계약 ~2027.07.14</li>
   </ul>
@@ -313,10 +319,12 @@
 <div class="bd">
   <ul class="t">
     <li><b>~~2026-09-03~~:</b> ⑤ 발송일 옵션 상시화 라이브 ✅ (9/21 기한 18일 선행)</li>
-    <li><b>2026-09-04 06:00:</b> 롤링 첫 자동 런 📅 카톡 눈도장(13/13 ✅ · 추가 10/1 · 삭제 8/20)</li>
+    <li><b>~~2026-09-04 06:00~~:</b> 롤링 첫 자동 런 ✅ (13/13 · 추가 10/1 · 삭제 8/20 = 기대값 일치)</li>
+    <li><b>~~2026-09-04~~ 🆕:</b> 송장잡 v1.30 라이브 ✅ (13:05 런 · 앱 "9/21 6건 · 📝CS 1" 실측)</li>
+    <li><b>2026-09-04~ [대표]:</b> GitHub manual/index.html = v2_6 교체 · 마케팅 회신 1호 전달</li>
     <li><b>2026-09-10:</b> 로켓 자연판매 1차 효과 비교 — 마케팅(캡처 = 대표)</li>
     <li><b>2026-09-15경:</b> 8월 광고 굽기 — 마케팅 첫 실전 · 이의신청 반영 발송점수 확인</li>
-    <li><b>2026-09-21:</b> 8월 급여 = <b>실근무 × 구시급 손정산</b> + 인원 세기 + 세무사 `26` 첨언 · 양정애 건(9/22→9/21) 아침 런 확인</li>
+    <li><b>2026-09-21:</b> 8월 급여 = <b>실근무 × 구시급 손정산</b> + 인원 세기 + 세무사 `26` 첨언 · 양정애 건(9/22→9/21) 아침 런 확인(예약 목록엔 이미 9/21)</li>
     <li><b>우체국 공지 후:</b> 명절 마감~재개 SHIP_HOLIDAYS 추가 + 노무 공지 · SD_SKIP_DATES 재확인</li>
     <li><b>2026-09-26:</b> 로켓 상품명·태그 "추석" 되돌리기 — 문안 = 마케팅 · 반영 = 대표</li>
     <li><b>추석 후:</b> 근태 v3.5 · 테스트 상품 정리 · 💼근무/급여 인적사항 분리</li>
@@ -330,10 +338,10 @@
 <details>
 <summary>⛔ 금지 28 (한 눈)</summary>
 <div class="bd" style="padding-top:8px">
-  <span class="chip">ROAS 2주 내 재수정</span><span class="chip">로켓 판매가 인하</span><span class="chip">엑셀 직접 복붙</span><span class="chip">카카오 대행사 정보</span><span class="chip">마스터 탭·행 삭제</span><span class="chip">단가표 onOpen 덮어쓰기</span><span class="chip">레거시·UNION 탭 삭제</span><span class="chip">미러 탭 수정</span><span class="chip">변환기 CSV 재저장</span><span class="chip">시트 직접 수정</span><span class="chip">번역표 E 직접 타이핑</span><span class="chip">키·시크릿 채팅 붙여넣기</span><span class="chip">우체국쇼핑 폴더·공유 삭제</span><span class="chip">근태 기록 탭 직접 수정</span><span class="chip">💼근무/급여에서 급여 캡처</span><span class="chip">옵션 재활성화 때 재고 999 잊기</span><span class="chip">수동출고 memo [ ] 지우기</span><span class="chip">정상 판매 상품에 예약판매 켜기</span><span class="chip">SSG 단품에 희망배송 켜기</span><span class="chip">출고 되돌릴 때 출고소화 줄 안 지우기</span><span class="chip">교환·재발송 카톡 한 줄 없이</span><span class="chip">서버에 파일 내용 셸 붙여넣기</span><span class="chip">동결 중 근태 코드 수정 · 노무 채팅 밖 근태 수정</span><span class="chip">🟡 총초과분 그대로 지시연장 입력</span><span class="chip">CS 날짜 건 새 날짜 전 완료 · 웹앱 "새 배포"</span><span class="chip">이의신청에 퀵·방문·일반 주문 끼워 넣기</span><span class="chip">실상품에 API 시험 · ship/index.html 위 14줄 지우기</span><span class="chip">🆕 발송일 옵션 손으로 추가·삭제 · SHIP_HOLIDAYS에 발송되는 날 넣기 · 단기 폼 링크 외부 배포</span>
+  <span class="chip">ROAS 2주 내 재수정</span><span class="chip">로켓 판매가 인하</span><span class="chip">엑셀 직접 복붙</span><span class="chip">카카오 대행사 정보</span><span class="chip">마스터 탭·행 삭제</span><span class="chip">단가표 onOpen 덮어쓰기</span><span class="chip">레거시·UNION 탭 삭제</span><span class="chip">미러 탭 수정</span><span class="chip">변환기 CSV 재저장</span><span class="chip">시트 직접 수정</span><span class="chip">번역표 E 직접 타이핑</span><span class="chip">키·시크릿 채팅 붙여넣기</span><span class="chip">우체국쇼핑 폴더·공유 삭제</span><span class="chip">근태 기록 탭 직접 수정</span><span class="chip">💼근무/급여에서 급여 캡처</span><span class="chip">옵션 재활성화 때 재고 999 잊기</span><span class="chip">수동출고 memo [ ] 지우기</span><span class="chip">정상 판매 상품에 예약판매 켜기</span><span class="chip">SSG 단품에 희망배송 켜기</span><span class="chip">출고 되돌릴 때 출고소화 줄 안 지우기</span><span class="chip">교환·재발송 카톡 한 줄 없이</span><span class="chip">서버에 파일 내용 셸 붙여넣기</span><span class="chip">동결 중 근태 코드 수정 · 노무 채팅 밖 근태 수정</span><span class="chip">🟡 총초과분 그대로 지시연장 입력</span><span class="chip">CS 날짜 건 새 날짜 전 완료 · 웹앱 "새 배포"</span><span class="chip">이의신청에 퀵·방문·일반 주문 끼워 넣기</span><span class="chip">실상품에 API 시험 · ship/index.html 위 14줄 지우기</span><span class="chip">발송일 옵션 손으로 추가·삭제 · SHIP_HOLIDAYS에 발송되는 날 넣기 · 단기 폼 링크 외부 배포</span>
 </div>
 </details>
 
-<div class="ft">정본: 클로드 프로젝트 <b>claude/한결맛담_운영매뉴얼_v2.md</b>(v2.5) · 최신 사실 = 현황판 최신판<br>이 페이지는 라이브 변경 세션마다 클로드가 재생성 → GitHub 업로드로 갱신 (#171)</div>
+<div class="ft">정본: 클로드 프로젝트 <b>claude/한결맛담_운영매뉴얼_v2.md</b>(v2.6) · 최신 사실 = 현황판 최신판<br>이 페이지는 라이브 변경 세션마다 클로드가 재생성 → GitHub 업로드로 갱신 (#171)</div>
 
 </div></body></html>
