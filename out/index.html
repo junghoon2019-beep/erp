@@ -94,7 +94,24 @@
      ㉑ '포함된 주문 보기' 목록에 체크칸 — 체크한 주문만 채우기(여러 건 가능 · 급한 건 먼저).
         부분 남은 주문은 '×6 (10 중)'으로 보여준다.
      ㉒ '건너뛰고 마치기'로 5종 잔여가 있어도 입력 수량대로 도장(대표 결정 가) + 경고 토스트.
-     ㉓ 구판 스크립트(v4.3)에 붙으면 pending.cell 이 없으므로 v3.7 동작(전체 도장 · 체크칸 없음)으로 후퇴. -->
+     ㉓ 구판 스크립트(v4.3)에 붙으면 pending.cell 이 없으므로 v3.7 동작(전체 도장 · 체크칸 없음)으로 후퇴.
+
+     v3.9 (2026-10-12): ★ "입력했는데 재고가 안 줄어 보임" 수리 + 틀린 숫자를 믿지 않게 (D-39 · 설계메모 v1.1 · 스크립트 v4.5와 한 짝)
+     원인(코드 판독 · 10/11 대표 현장 답과 부합): LOT 5개를 5~10초 간격으로 넣는데 장부를 새로 받는 데 5~8초 →
+     앞 입력의 답(새 입력이 안 들어간 값)이 다음 입력 뒤에 도착해 방금 줄인 화면 재고를 되돌렸다. 앱을 "다시 여는"
+     것은 대부분 이어 보기라 그 숫자가 다시 보였고, 껐다 켜면 새로 받으니 고쳐졌다(주 1회꼴).
+     ㉔ 번호표 — 받는 요청마다 번호. 더 새 답이 이미 반영됐으면 늦게 온 옛 답은 버린다(재고·주문 따로 센다).
+        + 기록 전송이 진행 중일 때 도착한 재고 답은 버린다(기록 성공 뒤 재고를 다시 받으므로 손해 없음).
+        + 스크립트 v4.5가 주는 lastRow(장부 마지막 줄)가 "방금 내가 기록한 줄"보다 앞서면 버리고 1.5초 뒤 다시 받는다.
+     ㉕ 재고 먼저, 주문은 뒤따라 — ?part=stock 와 ?part=orders 를 동시에 보낸다. 재고(0.5초)가 먼저 뜨고 주문(3초)은 뒤에 채워진다.
+        출고 기록 직후엔 재고만 받는다. 옛 스크립트는 part 를 몰라 둘 다 전부를 돌려주지만, 앱은 각 답에서 제 몫만 쓰므로 그대로 동작.
+     ㉖ 전송 실패 = 사라지지 않는 빨간 띠(모든 화면 위) + 경고음·진동 1회 + 30초마다 자동 재전송 + [다시 보내기].
+        기록마다 접수번호(rid)를 붙여 보낸다 → 스크립트 v4.5는 같은 rid 를 두 번 쓰지 않는다(응답만 잃어버린 재전송 안전).
+        못 보낸 기록은 폰에 저장하지 않는다(대표 결정 10/11 · 통신이 끊길 일이 드묾). 앱이 닫히면 띠와 함께 사라진다 — 종전과 같은 빈틈.
+     ㉗ 견본 재고(4월 LOT 목록)를 지웠다. 진짜 재고가 오기 전엔 "불러오는 중", 못 받으면 "못 받았어요 + [다시 받기]".
+        첫 화면·LOT 화면에 "HH:MM 기준"(3분 지나면 주황) · LOT 화면에도 새로고침 버튼.
+     ㉘ 다른 앱·꺼진 화면에서 돌아오면(1분 넘었으면) 자동으로 새로 받는다. 수량 입력 화면에서는 건드리지 않는다.
+     ㉙ 새로고침 뒤 "⏱ 총 5.0초 …" 알림은 끈다(주소에 ?diag=1 붙였을 때만). 출고 "기록" 형식(doPost 내용)은 rid 한 칸 추가 외 무변경. -->
 
 <!-- ※ 이 앱은 출고 "기록" 방식(doPost)을 바꾸지 않는다. 읽고 보여주는 쪽만 바뀐다. -->
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoi7JeQ64SI7KeA67CUIOy2nOqzoCAoT1VUKSIsInNob3J0X25hbWUiOiLstpzqs6AgT1VUIiwic3RhcnRfdXJsIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8iLCJzY29wZSI6Imh0dHBzOi8vanVuZ2hvb24yMDE5LWJlZXAuZ2l0aHViLmlvL2VycC9vdXQvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJvcmllbnRhdGlvbiI6InBvcnRyYWl0IiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZjFiMTQiLCJ0aGVtZV9jb2xvciI6IiMwZjFiMTQiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQ0FJQUFBQjdHa090QUFBV1FrbEVRVlI0MnUzZGUzaFY1WUhvNGIxenYwQUlJZUV1QVFGSmtLdUExZ3ZWUTBIc0dSeEwxZEY2ZHh5bm83WWRQYlh0ZVJ4OVBMVmpXM3R4K3ZUWU1sYmwxTEd0dGxwYlFiQmd4UUlpUlJFVkNQZHJ1RVFnaEV0SXlHVW4rL3d4ZldaNnpuU2N5dnFTblUzZTl6OGZ5YmUvOWEyVi9jdmVlNjIxNCtWUFhSTURvUHZKc0FRQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUFnQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQ0FBQUFnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0FnQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBSUFBQUNBSUFBQUNBQUFBZ0FBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFmMXFXSlRqOVpHZGtqZXA5eHRDaS9vTjZsQTRzTEIzWW83Ui9RZS9DN0x6OHJOeThySnk4ekp6Y3pKeVc5dGFUaWVhbVJHdFRvcmt4MFh5ZzhjaitodHA5SjJyM045UlcxeC9jZUhoM1UxdUxsUVFCSUEyVTVSZFBIVFIyZk9tSUNXWERLMHZLY3pLelAvemY1MlhtNUdYbXhITC84SjluOXhuNngvODMwZDYyNWVpZTl3NXRYM3RvK3h2NzErMDljY2dLdytrblh2N1VOVlloZlEzck5XRG1rQ21YbGsrZTJIZGtQQmJ2b0VmWldMZDcwZTYzRis5ZXZhRnVWd28zdGlTdjU1cnJub2c0eUcydmZ1dTFQV3M2WW5wenB0M3p5YUhuUlJsaHlaNTMvL3JWUno3a0g5dzhldVpYUDNacjl6bTg1NnlkOThqcW4vazE5d3FBLzNlM1pXVE9HbmIrcmFNdkcxODJvaE1lcnJLa3ZMS2svTzZKVjIwN3V1L0hHMzd6NHJabGpZbG1ld0VFZ0U1Vm5OdmpsdEdYWFY4eHZTeS91UE1mZlVUeG9IKzg0TFl2VDc3MjUxdGVuMXUxc0thaHpoNEJBYUF6L3VxL3NXTEczMCs4cWppM1IycG5VcFJUZVB1WVdUZFV6SGg4M2Z6SDE4MC82ZFVBQ0FBZFo5b1pFKzgvOThZemV3M3NPbFBLejhxOWUrSlYxNDZhOXEzVno3NjRiYmw5QkFKQStPZlpCejkyODdWblRldWEwK3RmVVBMb3grLzY1TkR6dnJ6ODhTUE45ZllYcEJFWGduVnBsU1hsTDEveGpTNzc3UDl2Wmd5Wi9NcnNSODdyUDlvdUF3RWdnTm5EcDc1MCtUOE83MHB2KzN6NFM0Rm5QL25BMzQ2ZFpjZUJBQkRKYldmLzkwY3Z2dk8vdko2cmF4MU04Zmg5VTI2NGI4b05IWGRGQWhDUXp3QzZvcTlNL3N3ZDQ2NUkwOG4vN2RoWmZmSjZmbVhGanhMdGJYWWxlQVhBUjNEZmxCdlM5OW4vWDEwNTh1THZUcjNUNndBUUFENkNtMGZQUEQzZVJyOWkrSVZmbm55dEhRb0N3Si9sMHZJcEQ1NTN5Mm16T1hlTXUrTDZpaGwyS3dnQS80VlJ2Yy80L2lXZno0aWZWbStiUEhUK3JSOGI0TnhRNktKOENOd2xaR2RrZmUvaXorVmw1blRFNEp1T1ZDL2Z0M1pqM2U3dHgycHFHbW9iV3B1YkVzMTVXVG1GMlhsbCtjWERldzJxNkgzR2hZUEdqdTF6WnZEOFpNWXpIcDE2NTh4ZmY3bStwZEZlQmdIZ1Q3aDMwaldWSmVWaHg2dzllZXk1TFV0K3R2bTEvU2RxLytQL2JXaHRhbWh0T3RoNHRPcndybm14V095ZDUwcnlpcTRlZWZIMUZUT0c5T3diY0JvRGU1UStkUDZ0OXl6OWdiME1Bc0QvNzl4K0ZiZVBDZm5CYjJPaStmRzE4eDVmTi84amZhdFhYZFB4eDlmTmYzTDlndXNxcHQ4ejhlcVN2SjZoNWpONytOUlhkNjlldUd1VmZRMEN3TCtMeCtMLzYveGJBcjczc3E1MngxMnZmNis2L3VDcC9YaGJzdjJaallzWDdGejU2TWZ2dW1Ud2hGQ3pldUM4bTE3YnM2YTVyZFVlaitMcERZdWUzckFvK0xCZnYrQnZycXVZSG1XRTFRYzJYN1hnUVRzbzdmZ1FPTVZtajdob2RNblFVS1A5YXZ2eUt4YzhlTXJQL24vMGFxRCsxc1dQL08vM1hndzFzUUdGZlc0WmZabmREUUxBSCtSa1puL3huR0JmeWZuY2xpVmZYUGJEbGtCL1pTZGp5ZSt1K1VYQUwrUzdhL3luVXY1TkJvQUFkQlUzVkV3ZjFLTTB5RkMvclg3bnZoVlB0Q2VUWVdjNForMjhwNm9XQmhtcUtLZndzMlAvMGs0SEFTQVdqOFZ2cXB3WlpLanR4L2IvL2RMSGdqLzcvNnV2di9XVDVmdldCUm5xTTZPbTVhYlY3ZTFBQU9nUVV3ZU5HMXJVUC9vNGJjbjIvN0hzaHcydEp6dG9ubTNKOWk4dG54UGtSUDdpM0I2enpyekFyZ2NCNk81dXJMdzB5RGh6cXhhK2YyaGJoMDcxZzhhNmI3ejkweUJEM2VUbUVDQUEzVnkvZ3Q3VHpwZ1lmWnhqelEzZkQzZXV6b2Q0YnN1U3JVZjNSaDluZk5tSWdHYzlBUUtRZnFZUG1ad1pEN0Q0VDZ4L3VYUHVzdENlVEg3djNSZUNESFZwK1dRSEFBaEFkdzdBT2RFSGFXcHIrWmVOaXp0dHpndDNyb3AraFVFc0ZwcytaSklEQUFTZ204clB5cjFnd0pqbzR5ellzZko0UzBPblRUc1pTLzU4eTVMbzQ0enBNNngvUVluREFBU2dPN3BvNEpnZ1owUCtmTXZyblR6ejU3ZitMc2pKcGtFKy93QUVJUDFNNlZjWmZaQzZwdnJWQnpkMzhzd1BOaDROY3NiUjVINFZEZ01RZ081b1hPbVowUWQ1ZmMrYURycnk2OE85dXVlZExySUNnQUNrbVhnc2ZuYWZvZEhIZVdQLytwVE0vNDE5YTZNUGNtYXZnWVhaZVE0R0VJRHVaV2l2L2oxekNxS1A4KzZoclNtWi80YTYzZEh2NnB3Umo1L3RhZ0FRZ081bWRJaHYvanJTWEwvcitBY3BtWCtpdlczOTRaMEIxaUhFeXlCQUFOTEo0QjVsMFFmWlhMY25oWnV3K1VpQVJ3OTFHMVJBQU5MR2dNSSswUWZaZWJ3bWhadXdLOFNqQjFrSFFBRFN5Y0QwRDhET1l6VmRaQjBBQWVoMnJ3QnFHdXBTdUFsQkhuMUFvYmVBUUFDNm1iNEZ2YU1QVXRkMFBJV2JjRGpFby9jdEtIWXdnQUIwTHdWWnVWM2tLVGkxK2NtTVoyUm5aRGtlUUFDNmtieXNuT2lEZE00dG9QOHp6VzJ0UWI1NlBzaFNBQUtRSnNzZGp3ZjVzN2VsTFpIYURXbHREekNCdkV3QkFBSG9Qbi8rQjNyS0MvTDhHKzFGUUlBSjVIc0ZBQUxRZmVTRXVBdDBMQlpyYlc5TDdZWWtRa3dnMUdvQUFwQUdncngxSG92RnNqTXlVN3NoV1NFbUVHbzFBQUZJQTAxdExZRUNrT0x6WjNJeXM3ck9hZ0FDa0FiYWs4a2diOTluWjZZNkFDRUsxSlR3Q2dBRW9GdTlDRWdFK0xPM0tMc2doWnVRazVrZDVPMzdrNGxteHdNSVFEZHlNa1FBU3ZKNnBuQVQrb1I0OUxaa2U4clBaUUlCb0ZNZE9uazB3Rk53ZnErVUJxQlhGMWtIUUFEU3lmNkd3OUVINlY5UWtzSk42RjhZNE5GclRoeDJNSUFBZExNQW5LaU5Qc2l3WGdOU3VBbkRpZ0k4ZXBBUUFnS1FUbXBDUFBFTksrcWYwZ0QwVDhrNkpOcmJBeHp4OFhoSC9TN0ZvLzQySlh3b2dnQ2MzdmFlT0JSOWtGRzl6MGpoSnB3VjR0SDNmZlIxQ0hMaFdGYUhYVUlSL2RxSVpsZkdJUUNudDQxMXU2TVBVcEpYVk42elgwcm1uNVdST2FaMFdQUnhOdFJWcCtUNXNlT3VvWXMrc2dBZ0FLZTVIY2RxR2xwUFJoOW5ZdCtSS1psL1pVbDU5RnZhSldQSjlZZDNuc0pQUlQ5enRDaW5veTZoS01vcGpCd0FsMFlqQUtlMVpDeFpkWGhYOUhFdUhEZ21KZk8vYU9EWTZJUHNQTlVLTnJaR3ZYYXNWMjVoQjYxTTlKR0RYQ01DQXRDbHJhM2RFWDJRYVdlYzAzR2ZaMzZJR1VNbXBYQUZhcHVPUlh6b3Z2bTlPMmhseXZLTEk0N2cyZ2dFNFBUMzlvRk4wUWZwazFjMHFlK29UcDU1YVg2dkNXVUIzbnBhZldEenFmM2dnY1lqRVI5NmNNK3lqbGlaa3J5aTZGLzJHWDNyUUFDNnVqZjJyd3R5UXN0Zm5YVkpKOC84NnBHWEJIblo4ZHFlTmFmNkZGa1g4YUU3NkF6YW9TR0dGUUFFNFBUWDBOcTBzbVpEOUhGbURUdS9SM1orcDAwN0hvdGZPMnBhOUhFMjFPMDY1WXNoUG1pSUdvQ2hSUU9pLzZuK0g0MHVLWTgreUFlUjh3WUNrQVordStlZDZJUGtaK1hlV0hscHA4MTU1dEFwUWM0OS9XMzFtbFArMlczSDlrYzk0dVB4c2FYRGd5L094TElSRVVkb2FXdmRVMy9RcndZQzBBMENVTDI2UFptTVBzNW54MTdlT1M4Q011THhleVplSFdTb1JidmZPdVdmM1hnNHdGVVVGM1hBQ1ZRWERvcDZjdFRXby9zU3FmNm1Ud1NBemxEVFVQZjYzbmVqajFPYzIrTnpFMlozd29TdkhubEprTXVQMTlidWlISVc3TmFqZTZNL1M4NHNQemZzNG93dkhSNzk5bndiNm5iNXZVQUF1b3RuTmk0T01zN3RZMmFOTFQyelE2ZmF0NkQ0SDg2OW9TdHNkV3Q3WXV2UnZSSG5jRmJ2d2VPQ3J0aFZJeStPUHNpR0VGZUhnQUNraDJYNzNxOE84WjV2Wmp6ajBZL2ZXWmlkMTFHSFNEeis3WXZ1aUg2WmF5d1dPOWJjTUgvSG14RUhXVmxURlgwbWZ6ZnVpbERyVTVyZjYrb1FwMk1GT1M4QUJDQTl0Q2VUVDIvNFRaQ2hSaFlQL3FlUDN4V1BkY2gxWVYrWmZOM0ZnOGNIR2VxNUxVdWlmeEg4MG4zdlI1L0pKNGVlTzdsZm1Lc283cDEwVGZSN1l4eG9QTExwU0xWZkNnU2dHL25KcGxkckF0MFcvOUx5S1E5ZmNGdndCdHcrWnRabngxNGVaS2o2bHNaL1hqc3YramlyYWpaR3YybGFQQmIvenRRN290KzhZZnFRU2RlZUZlRFUyR1VocWdZQ2tFNmEyMXEvcytZWG9VYTdybUw2ZDZiK1hhaTdYY1pqOGJzblhoWHFyZjlZTFBiRHRTOGRhYTZQUGs1VFc4dnlmV3VqanpPMHFQK1QwNzhVNVJ5cWMvdFhmditTTHdSWm5GZXIzL0hyZ0FCME83L2F0bXhUWGJEWC9sZU92UGlGV1Y4ZDNDUHEzUTZLYzNzOE9lTkxkMCs4S3RURWFocnEvay9WSzZGR2UzN3I3NEtNTTZWZnhZdXp2bGI1MGEvaGlzZmlOMVZlK3RQTC9pSElOV1dIbTQ0djJiUEc3d0lDME8yMEo1TVAvdjdIeVZneTFJRGpTNGN2bXYzdHo0MmZmV3B2VEdmR002NnJtTDdreWtjL2NjWTVBVGZ6NGJlZWFRcDNyK1BYOXF5cFBYa3N5RkJuOVI0OC95Ky8vdkFGdC8yWnQ0aklqR2ZNR0RMcDE1ZC83YUh6L3pyVWk2MFh0aTUxQlFBcGtXVUpVbTdWQnh1ZVdyL3diOGI4UmFnQkM3UHo3cDEwemMyalp6NjdlY216bTEvN016OW1LTW5yZWVXSWk2K3ZtRDQwOU4xeTV1MVk4ZkxPbFFFSFRMUzNQYi8xZDNjRU9wTW5LeVB6K29vWjExZk1lTDkyK3h2NzFyMTNhRnQxL1lFUEd1c2FXNXZia20yNW1UbTljZ29IOWlnOXEzandPWDFIZm1MSXBENTVSUUczSlJsTFByZGxpZDhDQktENyt0WTd6MTAwYUd4Rjd5RUJ4eXpMTC83Q2hFOS9mc0xzVFhYVnkvZXQyMUMzYThleC9UVU5kWTJKcHBPSjVyek1uSUxzdkxMODR1RzlCbGFVRExsbzROaHhwY003NHY3U05RMTE5Nzg1Ti9pd1Q2eGZjRlBsekxBbnY0NHZIVDYrQSs0UzhlSG03M2h6NTdFYXZ3SUlRUGZWMHRaNjk5TEhYcnI4NGR6TTdMQWp4MlB4eXBMeXloQzNLanNGN2Nua0Y1Zjk0SGhMUS9DUjY1cU96NjFhK1BrSm4wN3IvWjVvYjN0MHpmT09mMUxGWndCZHhhYTY2bnVXUGhia0JrRmR4MWRYL2ZqTkVOZHQvVWsvV3Y5eVhWTjlXcS9QejdjczJYWDhBd2MvQWtCczRhNVZENy8xekdtek9UOWE5L0xUR3haMTNQajFMWTBQckh3cWZkZW5wdUh3TjFjLzY3QkhBUGlEcDZvV3pxMWFlQnBzeU1zN1YzN2o3WjkyOUtNczJQbjdlVHRXcE9QNkpHUEpMeTc3WVgxTG8yTWVBZURmZlczVk0wK3Nmem10TitIWDI5KzRlK2xqQWM5dC9SQVBySnk3dS81QTJpM1I0K3ZtZDl5Yll5QUE2U29aU3o3ODFrKysrZmJQMG5UK2M2c1czclAwQjUxMll2dXg1b2FiRjMyanJ1bDRlcjA4ZXVSdGIvNGdBUHduL25uZHZIdVh6Mmx0VDZUUm5OdVR5VWRXUC92UXFuL3BuTC85LzgydTR4L2N1dmlSeGtSeldxelN5cHFxZTViK29KT1hDQVFnemJ5d2RlbnMrUStreTBuaUJ4dVAzcmpvNFRsclgwckpvNzlmdS8zYWhWOE5kWGx3eDFtMCsrMWJGeitTWGwxSEFFaU45WWQzL3NWTC8vT0ZyVXU3K0R4ZjI3UG1zbDkvYWNYKzlTbWN3OXJhSForYWYvKzJvL3U2N0NyTnJYcmxqaVdQQnJ3bEJnakFhYTR4MFh6djhqbTMvL2JiWGZPRThZT05SKzlkUHVlMlY3L1ZGVTdKMzN2aTBCWHo3Ly9aNXRlNjJpclZOZFhmOWZyM0hscjE5R2wyblFmcHpwWEE2ZUhWNm5kZTMvdmVMYU12KzhLRVR3ZjVjcTdvbXRwYW5seS9ZTTdhbHhwYW03ck9RalcwbnJ4dnhST3Y3UHI5TnkvODdLQWVwVjFoU3Evc1duWC9tMDhkVHF1UHFSRUF1cFpFZTl1VDZ4ZjhjdXV5Vzg2KzdQcFIwMHZ6ZTZWcUp2VXRqYzl2L2QwVDZ4ZUUramFiNEpidlcvZmZmbm5QRFJYVDd4ejNxUlF1MU1xYXF1K3UrY1hxQTVzZHZRZ0FBUnhwcnYrbk5jOC85dDZ2TGovei9KdEhYOWJKTnkvYmZtei8weHQrODh0dHk3clVYLzEvVWt0YjY5eXFWNTdkdk9Rem96N3htVkhUUmhZUDdzeFVMOW16WnU2R1YzN3ZhMzRSQUlKcmJVKzh1RzM1aTl1V245bHI0TXp5S1RQTHA0d3ZHOTVCM3drY2k4VTJIYWxldkh2MTR0MXZyeis4TTcwVzZtU2llVzdWd3JsVkN5ZVVqZmlya1pkTUh6SzViMEZ4QnoxV2V6SzUvdkRPZVR0V3ZMaHRlWjAzZkVnSDhmS25yckVLcDRGK0JiMHZHalJ1UXVudzhXVWpLa3VHUlB5dWtyWmsrOVlqZTkrcjNmYitvZTByOXErcnJqOTQyaXhVUmU4aFV3ZU51MkRnMldQNkRDdkxqeHFEUkh2YmptTTE3eDdhdW56ZjJoWDcxd2Y1emtzUUFFNWRka1pXWmNtUThxTCtnM3VVRGl3c0hkaWp0SDlCU1VGMlhsNW1UbjVXVGw1V1RrNUdkbXQ3b2luUmNyS3R1U25SMHBob090aDRkUCtKMm4wTnRmdFBITjVkZjJCajNlNlRhWEpkVlJRbGVUMHJTOHBIRmc4ZVVOaW5iMEZ4djRLU3Z2bkZoZG41dVpuWnVabFp1Wms1R2ZHTTF2WkVjMXRMYzF0clU2TGxhUE9KQTQxSERwNDhlckR4U0hYOWdVMTFlN1llM2V1a2ZnUUFnRFRqT2dBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFRQkFBQUFRQUFBRUFBQUJBRUFBQUJBQUFBUUFBQUVBUUFBQUVBQUFCQUFBQVFCQUFBQVFBQUFFQUFBQkFFQUFBQkFBQUFRQUFBRUFRQUFBRUFBQUFiQUVBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQUlBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBZ0FBQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUFJQUlBQUFDQUFBQWdDQUFBQWdBQUFJQUFBQ0FJQUFBQ0FBQUFnQUFBSUFnQUFBSUFBQUNBQUFBZ0NBQUFBZ0FBQUlBQUFDQUlBQUFDQUFBQWdBQUgvcy93TEh1Uk9NR0YrNGtnQUFBQUJKUlU1RXJrSmdnZz09Iiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyIsInB1cnBvc2UiOiJhbnkgbWFza2FibGUifV0sImlkIjoiaHR0cHM6Ly9qdW5naG9vbjIwMTktYmVlcC5naXRodWIuaW8vZXJwL291dC8ifQ==">
@@ -256,6 +273,23 @@
     background:var(--warn-bg); color:var(--warn); font-size:13px; font-weight:600;
     padding:10px 14px; border-radius:10px; margin:0 20px 12px; text-align:center; line-height:1.5;
   }
+  /* [v3.9] 기준 시각 — 화면 숫자가 언제 받은 값인지. 3분 지나면 주황. */
+  .asof{ font-size:12.5px; color:var(--dim); font-weight:700; margin:-6px 0 12px; }
+  .asof.old{ color:var(--warn); }
+  .asof.none{ color:var(--urgent); }
+  /* [v3.9] 전송 실패 빨간 띠 — 모든 화면 맨 위에 고정. 사라지지 않는다. */
+  .failband{ background:var(--urgent-bg); border:2px solid var(--urgent); color:var(--urgent); border-radius:14px;
+    padding:12px 14px; margin:0 0 14px; font-size:14.5px; font-weight:800; line-height:1.5;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .failband .fb-sub{ display:block; font-size:12.5px; font-weight:600; color:#ffb3b3; margin-top:4px; }
+  .failband .fb-btn{ flex:none; background:var(--urgent); color:#fff; border:none; border-radius:10px;
+    padding:10px 12px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; }
+  .failband .fb-btn:disabled{ opacity:.6; }
+  /* [v3.9] 재고를 아직 못 받았을 때 — 견본 숫자 대신 이 상자. */
+  .stockwait{ background:var(--card2); border:2px solid var(--line); border-radius:16px; padding:22px 16px;
+    margin:0 0 14px; text-align:center; font-size:17px; font-weight:800; color:var(--dim); line-height:1.5; }
+  .stockwait.fail{ border-color:var(--urgent); color:var(--urgent); }
+  .stockwait .reload-btn{ margin-top:12px; }
   /* 작업자(출고관리자) 선택 — 수량 화면 */
   .worker-box{ background:var(--card2); border:2px solid var(--line); border-radius:16px;
     padding:16px; margin-bottom:18px; text-align:left; }
@@ -401,33 +435,19 @@ const PRODUCTS = [
    실시간으로 받아와 이 배열을 통째로 교체한다(화면 재고 = 시트 재고).
    아래 값들은 시트에서 못 받아왔을 때(네트워크/CORS 등) 쓰는 "대비용 기본값"일 뿐이다.
    ※ 화면에 옛 숫자(예: 크랜베리 1076)가 보이면 시트에서 못 받아온 것 → '재고 새로고침' 누르거나 새로고침. */
-let LOTS = [
-  {lot:'260320B',code:'EAE1CA',stock:13, exp:'2026-06-18',days:62},
-  {lot:'260323B',code:'EAE1CA',stock:94, exp:'2026-06-21',days:65},
-  {lot:'260327A',code:'EAE1ST',stock:76, exp:'2026-06-25',days:69},
-  {lot:'260330A',code:'EAE1ST',stock:136,exp:'2026-06-28',days:72},
-  {lot:'260330B',code:'EAE1CA',stock:136,exp:'2026-06-28',days:72},
-  {lot:'260402A',code:'EAE1ST',stock:170,exp:'2026-07-01',days:75},
-  {lot:'260402C',code:'EAE1CA',stock:147,exp:'2026-07-01',days:75},
-  {lot:'260403A',code:'EAE1CR',stock:230,exp:'2026-07-02',days:76},
-  {lot:'260406A',code:'EAE1ST',stock:11, exp:'2026-07-05',days:79},
-  {lot:'260406B',code:'EAE1BK',stock:26, exp:'2026-07-05',days:79},
-  {lot:'260407A',code:'EAE1BK',stock:181,exp:'2026-07-06',days:80},
-  {lot:'260409A',code:'EAE1CR',stock:345,exp:'2026-07-08',days:82},
-  {lot:'260412B',code:'EAE1BK',stock:34, exp:'2026-07-11',days:85},
-  {lot:'260413A',code:'EAE1NU',stock:191,exp:'2026-07-12',days:86},
-  {lot:'260413B',code:'EAE1BK',stock:135,exp:'2026-07-12',days:86},
-  {lot:'260414A',code:'EAE1NU',stock:136,exp:'2026-07-13',days:87},
-  {lot:'260414B',code:'EAE1BK',stock:204,exp:'2026-07-13',days:87},
-  {lot:'260414C',code:'EAE1CR',stock:33, exp:'2026-07-13',days:87},
-  {lot:'260414D',code:'EAE1NU',stock:167,exp:'2026-07-13',days:87},
-  {lot:'260414E',code:'EAE1BK',stock:101,exp:'2026-07-13',days:87},
-  {lot:'260415A',code:'EAE1ST',stock:197,exp:'2026-07-14',days:88},
-  {lot:'260415B',code:'EAE1CA',stock:132,exp:'2026-07-14',days:88},
-  {lot:'260416A',code:'EAE1CA',stock:136,exp:'2026-07-15',days:89},
-  {lot:'260416B',code:'EAE1CR',stock:136,exp:'2026-07-15',days:89},
-  {lot:'260416C',code:'EAE1CR',stock:332,exp:'2026-07-15',days:89},
-];
+let LOTS = [];   // [v3.9] 견본 재고 삭제 — 진짜 재고가 오기 전엔 '불러오는 중'을 보여준다(STOCK_STATE).
+// [v3.9] 재고 수신 상태 · 기준 시각 · 번호표 · 전송 대기열
+let STOCK_STATE='pending';      // 'pending' = 아직 못 받음 · 'ok' = 받음 · 'fail' = 통신 실패(받아둔 게 있으면 그 값 유지)
+let lastStockAt=0;              // 마지막으로 재고를 받은 시각(ms)
+let minLastRow=0;               // 방금 내가 기록한 장부 줄 번호(스크립트 v4.5 lastRow) — 이보다 앞선 재고 답은 버린다
+const reqSeq={stock:0, orders:0}, appliedSeq={stock:0, orders:0};   // 번호표: 보낸 번호 / 반영된 번호
+let sendInFlight=0;             // 지금 보내는 중인 출고 기록 수 — 이 동안 도착한 재고 답은 버린다
+let PENDING_SENDS=[];           // 못 보낸 기록 [{rid, body, label, tries, err}] — 폰에 저장하지 않는다(대표 결정)
+let sendBusy=false;
+const DIAG_ON = /[?&]diag=1/.test(location.search);   // 주소에 ?diag=1 → 속도 숫자 표시
+const STALE_MS = 3*60*1000;     // 기준 시각 주황색 = 3분
+const AUTO_REFRESH_MS = 60*1000;   // 돌아왔을 때 자동으로 새로 받는 기준 = 1분
+const RESEND_MS = 30*1000;      // 못 보낸 기록 자동 재전송 간격 = 30초
 
 let view='products', curProduct=null, curLot=null, qty='', loss=0;
 // 구글 시트 연결 주소 (운영용)
@@ -437,7 +457,7 @@ const SHEET_URL='https://script.google.com/macros/s/AKfycby9_qw5DrF5AFT8fSByM47Q
 //   총시간 = 통신(왕복) + 서버계산 + 화면그리기.
 //   어디가 느린지 사람이 눈으로 알 수 있게 나눠서 띄운다.
 //   나중에 필요 없어지면 false로만 바꾸면 된다.
-const SHOW_TIMING = true;
+const SHOW_TIMING = DIAG_ON;   // [v3.9] 현장 화면에서는 끔. 주소 뒤에 ?diag=1 을 붙이면 종전처럼 보인다.
 let todayOut=[]; // 오늘 출고 기록 (이 미리보기 안에서만)
 let RECENTS=[];  // [v2] 시트에서 받아온 최근 5일 출고기록 (화면 하단 '최근 출고 내역')
 let justOut={};  // 방금 출고한 LOT별 수량 (LOT 목록에 "방금 N개" 표시용)
@@ -496,85 +516,195 @@ let currentWorker='';  // 직전에 고른 작업자 기억(같은 사람이 LOT
 // 실패해도 화면은 기본 목록·기본 LOT(코드 박힌 샘플)으로 계속 동작.
 let SHEET_TODAY='';   // 시트가 알려준 오늘 날짜(받기 전엔 빈값)
 function loadFromSheet(opts){
+  // [v3.9] 재고(part=stock)와 주문(part=orders)을 따로 받는다. opts.part 가 없으면 둘 다 동시에.
+  //   · 번호표: 요청마다 번호를 붙이고, 더 새 답이 이미 반영됐으면 늦게 온 옛 답은 버린다.
+  //   · 기록 전송 중(sendInFlight>0)에 도착한 재고 답은 버린다 — 기록 성공 뒤 재고를 다시 받는다.
+  //   · 스크립트 v4.5의 lastRow 가 "방금 내가 기록한 줄(minLastRow)"보다 앞서면 버리고 1.5초 뒤 한 번 더 받는다.
+  //   · 옛 스크립트(part 모름)는 둘 다 전부를 돌려주지만, 각 답에서 제 몫만 쓰므로 그대로 동작한다.
   opts = opts || {};
   if(SHEET_URL.indexOf('http')!==0) return;
+  const parts = opts.part==='stock' ? ['stock'] : (opts.part==='orders' ? ['orders'] : ['stock','orders']);
   if(opts.btn){ opts.btn.disabled=true; opts.btn.textContent='불러오는 중…'; }
-  // [v3.4.1] 스톱워치. t0 = 누른 순간 / tNet = 데이터가 다 도착한 순간 / 끝 = 화면까지 그린 순간
   const t0 = Date.now();
-  let tNet = 0;
-  const url = SHEET_URL + (SHOW_TIMING ? '?diag=1' : '');
-  fetch(url,{method:'GET'})
-    .then(r=>r.json())
-    .then(res=>{
-      tNet = Date.now() - t0;
-      // (1) 작업자 목록
-      if(res && Array.isArray(res.workers) && res.workers.length){
-        WORKERS=res.workers;
-        const sel=document.getElementById('workerSelect');
-        if(sel) fillWorkerSelect(sel);   // 수량 화면이 떠 있으면 다시 채움
-      }
-      // (2) 오늘 날짜
-      if(res && res.today) SHEET_TODAY=res.today;
-      // [v2] 최근 5일 출고기록 (하단 '최근 출고 내역'에 표시)
-      if(res && Array.isArray(res.records)) RECENTS=res.records;
-      // [v3] QUICK 분해표 — 비어 있다가 처음 받아졌고 QUICK 입력 화면이면 다시 그림
-      if(res && res.calc && Array.isArray(res.calc.items) && res.calc.items.length){
-        const wasEmpty = !CALC.items.length;
-        CALC = res.calc;
-        if(wasEmpty && view==='quick') render();
-      }
-      // [v3.1→v3.4] 주문 집계.
-      //   스크립트 v4.1+ = recentOrders(최근 N일) · 구버전 v4 = todayOrders(오늘)만.
-      //   둘 다 없으면 상태를 건드리지 않는다(= 계속 '못 받음'으로 남는다).
-      if(res && res.todayOrders) TODAY_ORDERS = res.todayOrders;
-      // [v3.7] 도장 안 찍힌 주문. 스크립트 v4.3+만 내려준다. 없으면 null → 뺄셈 경로로 후퇴.
-      PENDING = (res && res.pending && typeof res.pending==='object') ? res.pending : null;
-      if(res && (res.recentOrders || res.todayOrders)){
-        const wasNull = !ORDERS;
-        ORDERS = res.recentOrders || res.todayOrders;
-        ORDERS_STATE = 'ok';
-        if((wasNull || view==='quick') && (view==='quick'||view==='products')) render();
-      }
-      // (3) LOT 재고 — 시트는 left로 주는데 이 화면은 days를 쓰므로 left→days 매핑
-      if(res && Array.isArray(res.lots) && res.lots.length){
-        LOTS = res.lots.map(l=>({
-          lot:   l.lot,
-          code:  l.code,
-          stock: Number(l.stock)||0,
-          exp:   l.exp || '',
-          days:  (l.left!=null ? Number(l.left) : 0)   // ← left→days 매핑
-        }));
-        // 상품/LOT 화면이 떠 있으면 새 재고로 다시 그림 (수량 입력 중이면 건드리지 않음)
-        if(view==='products' || view==='lots') render();
-      }
-      if(opts.btn){
-        // [v3.4.1] 실제로 걸린 시간을 보여준다. 추측 대신 숫자.
+  let left = parts.length, failed = 0, diagRes = null, tNet = 0;
+  parts.forEach(part=>{
+    const seq = ++reqSeq[part];
+    const url = SHEET_URL + '?part=' + part + (SHOW_TIMING ? '&diag=1' : '');
+    fetch(url,{method:'GET'})
+      .then(r=>r.json())
+      .then(res=>{
+        if(!tNet) tNet = Date.now() - t0;
+        if(part==='stock' && res && res.diag) diagRes = res;
+        if(seq < appliedSeq[part]){ console.log('[번호표] 옛 답 버림', part, seq, '<', appliedSeq[part]); return; }
+        if(part==='stock'){
+          if(sendInFlight>0){ console.log('[번호표] 기록 전송 중 — 재고 답 보류(성공 뒤 다시 받음)'); return; }
+          const lr = (res && res.lastRow!=null) ? Number(res.lastRow) : null;
+          if(lr!=null && minLastRow && lr < minLastRow){
+            console.log('[번호표] 내 기록보다 앞선 장부 답 버림 lastRow', lr, '<', minLastRow);
+            if(!opts._retried) setTimeout(()=>loadFromSheet({part:'stock', _retried:true}), 1500);
+            return;
+          }
+          applyStock_(res); appliedSeq.stock = seq;
+        }else{
+          applyOrders_(res); appliedSeq.orders = seq;
+        }
+      })
+      .catch(err=>{
+        failed++;
+        console.log('시트에서 받아오기 실패('+part+'):', err);
+        if(part==='stock'){ if(STOCK_STATE!=='ok') STOCK_STATE='fail'; if(view==='products'||view==='lots') render(); }
+        else { if(ORDERS_STATE!=='ok') ORDERS_STATE='fail'; if(view==='quick'||view==='products') render(); }
+      })
+      .then(()=>{
+        left--;
+        if(left>0 || !opts.btn) return;
         const tot = Date.now() - t0;
+        if(failed){ opts.btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>resetReloadBtn(opts.btn),1800); return; }
         if(SHOW_TIMING){
-          const raw = (res && res.diag && res.diag.total) ? res.diag.total : 0;
-          const srv = Math.min(raw, tNet);              // 서버 시간이 총시간을 넘을 수 없게
-          const net = Math.max(0, tNet - srv);          // 통신 왕복 = 도착까지 − 서버계산
-          const draw = Math.max(0, tot - tNet);         // 화면 그리기
+          const raw = (diagRes && diagRes.diag && diagRes.diag.total) ? diagRes.diag.total : 0;
+          const srv = Math.min(raw, tNet||tot), net = Math.max(0, (tNet||tot) - srv), draw = Math.max(0, tot - (tNet||tot));
           opts.btn.textContent = '✓ 받음 ('+(tot/1000).toFixed(1)+'초)';
-          showToast('⏱ 총 '+(tot/1000).toFixed(1)+'초<br>'
-                  + '통신 '+(net/1000).toFixed(1)+'초 · 서버 '+(srv/1000).toFixed(1)+'초 · 화면 '+(draw/1000).toFixed(1)+'초');
-          console.log('[속도] 총', tot, 'ms / 통신', net, '/ 서버', srv, '/ 화면', draw, res && res.diag);
+          showToast('⏱ 총 '+(tot/1000).toFixed(1)+'초<br>통신 '+(net/1000).toFixed(1)+'초 · 서버 '+(srv/1000).toFixed(1)+'초 · 화면 '+(draw/1000).toFixed(1)+'초');
+          console.log('[속도] 총', tot, 'ms', diagRes && diagRes.diag);
         } else {
           opts.btn.textContent='✓ 최신 재고 받음';
         }
-        // 붙들기 1.5초 → 0.6초. 데이터는 이미 왔는데 버튼이 기다리는 것처럼 보였다.
         setTimeout(()=>resetReloadBtn(opts.btn),600);
-      }
-    })
-    .catch(err=>{
-      console.log('시트에서 받아오기 실패 — 기본값 사용:', err);
-      // [v3.4] 통신 실패를 기록한다. "주문 0건"과 반드시 구분해야 한다.
-      //   이미 한 번 잘 받아둔 게 있으면 그 값을 살려둔다(화면이 비지 않게).
-      if(ORDERS_STATE!=='ok') ORDERS_STATE='fail';
-      if(view==='quick'||view==='products') render();
-      if(opts.btn){ opts.btn.textContent='⚠ 실패 · 다시'; setTimeout(()=>resetReloadBtn(opts.btn),1800); }
-    });
+      });
+  });
 }
+/** [v3.9] 재고 묶음 답 반영 — 작업자·오늘·최근 출고·구성표·LOT 재고. (종전 loadFromSheet 의 해당 부분을 떼어낸 것) */
+function applyStock_(res){
+  if(!res) return;
+  if(Array.isArray(res.workers) && res.workers.length){
+    WORKERS=res.workers;
+    const sel=document.getElementById('workerSelect');
+    if(sel) fillWorkerSelect(sel);
+  }
+  if(res.today) SHEET_TODAY=res.today;
+  if(Array.isArray(res.records)) RECENTS=res.records;
+  if(res.calc && Array.isArray(res.calc.items) && res.calc.items.length){
+    const wasEmpty = !CALC.items.length;
+    CALC = res.calc;
+    if(wasEmpty && view==='quick') render();
+  }
+  if(Array.isArray(res.lots)){
+    LOTS = res.lots.map(l=>({
+      lot:   l.lot,
+      code:  l.code,
+      stock: Number(l.stock)||0,
+      exp:   l.exp || '',
+      days:  (l.left!=null ? Number(l.left) : 0)
+    }));
+    STOCK_STATE='ok'; lastStockAt=Date.now();
+    // 상품/LOT 화면이 떠 있으면 새 재고로 다시 그림 (수량 입력 중이면 건드리지 않음)
+    if(view==='products' || view==='lots') render();
+    updateAsof_();
+  }
+}
+/** [v3.9] 주문 답 반영 — todayOrders · pending · recentOrders. (종전 loadFromSheet 의 해당 부분을 떼어낸 것) */
+function applyOrders_(res){
+  if(!res) return;
+  if(res.todayOrders) TODAY_ORDERS = res.todayOrders;
+  if(res.pending!==undefined || res.recentOrders!==undefined || res.todayOrders!==undefined){
+    PENDING = (res.pending && typeof res.pending==='object') ? res.pending : null;
+  }
+  if(res.recentOrders || res.todayOrders){
+    const wasNull = !ORDERS;
+    ORDERS = res.recentOrders || res.todayOrders;
+    ORDERS_STATE = 'ok';
+    if((wasNull || view==='quick') && (view==='quick'||view==='products')) render();
+  }
+}
+/** [v3.9] "HH:MM 기준" 글자. 3분 지나면 old · 아직 못 받았으면 none. */
+function asofHTML(){
+  if(!lastStockAt) return '<div class="asof none" id="asof">재고를 아직 못 받았어요</div>';
+  const d=new Date(lastStockAt), z=n=>String(n).padStart(2,'0');
+  const old = (Date.now()-lastStockAt) > STALE_MS;
+  const mins = Math.floor((Date.now()-lastStockAt)/60000);
+  return '<div class="asof'+(old?' old':'')+'" id="asof">'+z(d.getHours())+':'+z(d.getMinutes())+' 기준'+(old?' · '+mins+'분 지남 — 새로고침 권장':'')+'</div>';
+}
+function updateAsof_(){
+  const el=document.getElementById('asof'); if(!el) return;
+  const tmp=document.createElement('div'); tmp.innerHTML=asofHTML();
+  el.className=tmp.firstChild.className; el.textContent=tmp.firstChild.textContent;
+}
+setInterval(updateAsof_, 20000);
+/** [v3.9] 다른 앱·꺼진 화면에서 돌아왔을 때 — 못 보낸 기록 재전송 + (1분 넘었으면) 재고 새로 받기. 수량 입력 화면은 건드리지 않는다. */
+function onResume_(){
+  if(document.visibilityState && document.visibilityState!=='visible') return;
+  if(!lastStockAt && STOCK_STATE==='pending') return;   // 켜질 때의 첫 요청이 이미 나가 있음 — 두 번 받지 않는다
+  if(PENDING_SENDS.length) retrySends();
+  if((view==='products'||view==='lots') && (Date.now()-lastStockAt) > AUTO_REFRESH_MS){
+    loadFromSheet(view==='products' ? {} : {part:'stock'});
+  }
+}
+document.addEventListener('visibilitychange', onResume_);
+window.addEventListener('pageshow', onResume_);
+/* ═══════════ [v3.9] 출고 기록 보내기 · 실패 띠 · 재전송 ═══════════ */
+/** 접수번호 — 기록마다 하나. 스크립트 v4.5는 같은 번호를 두 번 쓰지 않는다. */
+function makeRid_(lot){
+  const d=new Date(), z=n=>String(n).padStart(2,'0');
+  return 'out-'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'-'+z(d.getHours())+z(d.getMinutes())+z(d.getSeconds())+'-'+Math.random().toString(36).slice(2,6)+'-'+(lot||'');
+}
+/** 출고 기록 1건 보내기. job = { rid, body, label, tries } */
+function sendRecord_(job){
+  sendInFlight++;
+  return fetch(SHEET_URL,{ method:'POST', body:JSON.stringify(job.body) })
+    .then(r=>r.text())
+    .then(txt=>{
+      let j=null; try{ j=JSON.parse(txt); }catch(e){}
+      if(j && j.ok===true){
+        if(j.lastRow!=null) minLastRow = Math.max(minLastRow, Number(j.lastRow)||0);
+        PENDING_SENDS = PENDING_SENDS.filter(x=>x.rid!==job.rid);
+        showToast(j.dup ? ('✓ '+job.label+'<br><span style="font-size:14px">이미 기록돼 있었어요(중복 안 됨)</span>') : ('✓ '+job.label+'<br>시트에 기록됨'));
+        return true;
+      }
+      queueFail_(job, (j && j.error) ? String(j.error).slice(0,80) : '기록 안 됨');
+      return false;
+    })
+    .catch(err=>{ queueFail_(job, '전송 오류 — 인터넷 확인'); return false; })
+    .then(ok=>{ sendInFlight=Math.max(0, sendInFlight-1); if(ok) loadFromSheet({part:'stock'}); else render(); return ok; });
+}
+/** 실패 → 대기열에 넣고(같은 rid 는 한 번만) 띠·소리. */
+function queueFail_(job, err){
+  job.tries=(job.tries||0)+1; job.err=err||'';
+  if(!PENDING_SENDS.some(x=>x.rid===job.rid)){ PENDING_SENDS.push(job); alertUser_(); }
+  showToast('🚨 기록 안 됨 — '+job.label+'<br><span style="font-size:14px">위쪽 빨간 띠의 [다시 보내기]</span>');
+}
+/** 경고음 2회 + 진동. 폰이 무음이면 진동만. 실패해도 조용히 넘어간다. */
+function alertUser_(){
+  try{ if(navigator.vibrate) navigator.vibrate([250,120,250]); }catch(e){}
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    const ctx = new AC(); const t=ctx.currentTime;
+    [0,0.35].forEach(off=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.value=880;
+      g.gain.setValueAtTime(0.0001,t+off); g.gain.exponentialRampToValueAtTime(0.25,t+off+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+off+0.25);
+      o.connect(g); g.connect(ctx.destination); o.start(t+off); o.stop(t+off+0.3); });
+    setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 1500);
+  }catch(e){}
+}
+/** 못 보낸 기록 전부 다시 보내기(한 건씩 차례로). 버튼·30초 타이머·돌아왔을 때 공용. */
+function retrySends(){
+  if(sendBusy || !PENDING_SENDS.length) return;
+  sendBusy=true; render();
+  const jobs = PENDING_SENDS.slice();
+  let p = Promise.resolve();
+  jobs.forEach(job=>{ p = p.then(()=>sendRecord_(job)); });
+  p.then(()=>{ sendBusy=false; render(); });
+}
+setInterval(()=>{ if(PENDING_SENDS.length && !sendBusy && document.visibilityState!=='hidden') retrySends(); }, RESEND_MS);
+/** 빨간 띠 — 모든 화면 맨 위. render() 가 마지막에 붙인다. */
+function failBandHTML(){
+  if(!PENDING_SENDS.length) return '';
+  const f=PENDING_SENDS[0], more=PENDING_SENDS.length-1;
+  return `<div class="failband">
+    <span>🚨 기록 안 됨 — ${f.label}${more>0?' <span style="font-weight:600">(외 '+more+'건)</span>':''}
+      <span class="fb-sub">장부에 아직 안 들어갔어요 · ${f.err||''} · 30초마다 자동으로 다시 보냅니다</span></span>
+    <button class="fb-btn" ${sendBusy?'disabled':''} onclick="retrySends()">${sendBusy?'보내는 중…':'다시 보내기'}</button>
+  </div>`;
+}
+
 // 이전 이름(loadWorkers)으로도 부를 수 있게 별칭 유지
 function loadWorkers(){ loadFromSheet(); }
 function resetReloadBtn(btn){ if(btn){ btn.disabled=false; btn.textContent='🔄 재고 새로고침'; } }
@@ -616,6 +746,8 @@ function render(){
   else if(view==='qty') renderQty();
   else if(view==='quick') renderQuick();
   else if(view==='qsum') renderQsum();
+  // [v3.9] 못 보낸 기록이 있으면 어느 화면이든 맨 위에 빨간 띠.
+  if(PENDING_SENDS.length) screen.insertAdjacentHTML('afterbegin', failBandHTML());
 }
 
 function renderProducts(){
@@ -625,6 +757,7 @@ function renderProducts(){
       <span class="hint" style="margin:0;">어떤 에너지바를 출고하나요?</span>
       <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 재고 새로고침</button>
     </div>`;
+  h+=asofHTML();   // [v3.9] "HH:MM 기준"
   // [v3] QUICK 출고 입구
   // [v3.3] 입구 2개 — 주문 출고 / 수동 출고
   // [v3.5] 설명을 '건수'가 아니라 '아직 안 나간 낱개 수량'으로 바꿨다.
@@ -654,7 +787,15 @@ function renderProducts(){
       </span>
       <span class="qb-arrow">›</span>
     </button>`;
+  // [v3.9] 진짜 재고가 오기 전·못 받았을 때는 견본 숫자 대신 상자. 받아둔 게 있으면(LOTS 있음) 그 값 그대로.
+  if(STOCK_STATE!=='ok' && !LOTS.length){
+    h+= (STOCK_STATE==='fail')
+      ? `<div class="stockwait fail">⚠ 재고를 못 받았어요<br><span style="font-size:14px">인터넷을 확인하고 다시 받아 주세요</span><br>
+           <button class="reload-btn" onclick="loadFromSheet({btn:this})">🔄 다시 받기</button></div>`
+      : `<div class="stockwait">⏳ 재고를 불러오는 중…</div>`;
+  }
   PRODUCTS.forEach(p=>{
+    if(STOCK_STATE!=='ok' && !LOTS.length) return;   // [v3.9] 숫자 없이 상품 줄만 뜨면 0으로 보여 헷갈린다 → 상자만
     const st=stockOf(p.code);
     h+=`<div class="prod" onclick="pickProduct('${p.code}')">
       <div><div class="pname"><span class="dot" style="background:${p.color}"></span>${p.name}</div>
@@ -1446,7 +1587,12 @@ function renderLots(){
       <div class="qb-main">${p.name} — ${rem>0? '앞으로 <span style="color:var(--accent)">'+rem+'개</span> 더 출고':'✓ 필요수량 채웠어요. 다음 상품으로!'}</div>
     </div>`;
   }
-  h+='<div class="hint">유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 꺼내세요.</div>';
+  // [v3.9] LOT 화면에도 새로고침 + 기준 시각 (재고만 받는다 · 주문은 안 건드림)
+  h+=`<div class="reload-row">
+      <span class="hint" style="margin:0;">유통기한 임박순입니다. <b style="color:var(--accent)">맨 위부터</b> 꺼내세요.</span>
+      <button class="reload-btn" onclick="loadFromSheet({btn:this,part:'stock'})">🔄 재고 새로고침</button>
+    </div>`;
+  h+=asofHTML();
   let firstLive=true;
   list.forEach((l)=>{
     const [cls,txt]=badge(l.days);
@@ -1573,22 +1719,16 @@ function confirmOut(){
   const line={ lot:l.lot, qty:n, memo:whyMemo() };   // [v3.3] 수동 출고면 '[사유]' 기록
   if(loss>0) line.loss=-loss;          // 화면은 양수 입력 → 시트엔 음수로
   showToast(`전송 중…`);
-  fetch(SHEET_URL,{
-    method:'POST',
-    body:JSON.stringify({
-      type:'normal', otype:outType(), manager,   // [v3.6] 종전엔 무조건 '일반주문'이었다
-      lines:[line]
-    })
-  })
-  .then(r=>r.text())
-  .then(txt=>{
-    let ok=false;
-    try{ ok = JSON.parse(txt).ok===true; }catch(e){}
-    if(ok) showToast(`✓ ${prodName(l.code)} ${l.lot}<br>${n}개${loss>0?' · 로스 '+loss+'개':''} 시트에 기록됨`);
-    else showToast(`⚠ 기록 안 됨<br>다시 시도하세요`);
-    if(ok) loadFromSheet();   // [v2] 최신 재고 + 최근 출고내역 다시 받아오기
-  })
-  .catch(err=>showToast(`⚠ 전송 오류<br>인터넷 확인 후 다시`));
+  // [v3.9] 접수번호(rid)를 붙여 보낸다. 실패하면 빨간 띠 + 자동 재전송(sendRecord_). 성공하면 재고만 다시 받는다.
+  //   보내는 내용은 종전과 같고 rid 한 칸만 늘었다(옛 스크립트는 rid 를 무시한다).
+  const rid = makeRid_(l.lot);
+  sendRecord_({
+    rid: rid,
+    label: `${prodName(l.code)} ${l.lot} ${n}개${loss>0?' · 로스 '+loss+'개':''}`,
+    body: { type:'normal', otype:outType(), manager, rid:rid,   // [v3.6] 종전엔 무조건 '일반주문'이었다
+            lines:[line] },
+    tries: 0
+  });
 
   // 같은 상품의 LOT 목록으로 복귀 (여러 LOT 연달아 출고)
   curLot=null; qty=''; loss=0; history.back();
